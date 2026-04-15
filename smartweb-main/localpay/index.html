@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalPay | Panel Operativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary: #2563eb; --success: #10b981; --danger: #ef4444; --bg: #f1f5f9; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; color: #1e293b; overflow-x: hidden; }
+        
+        .sidebar { width: 280px; height: 100vh; position: fixed; background: white; border-right: 1px solid #e2e8f0; padding: 2rem; display: flex; flex-direction: column; z-index: 100; }
+        .main-content { margin-left: 280px; padding: 3rem; max-width: 1200px; }
+        
+        .card-custom { border: none; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); background: white; transition: 0.3s; }
+        .card-custom:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        
+        .semaforo-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .dot-pending { background: #94a3b8; animation: pulse 1.5s infinite; }
+        .dot-success { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        @media print { 
+            .sidebar, .no-print, button, .input-group, .btn-group { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; }
+            .print-header { display: block !important; text-align: center; border-bottom: 2px dashed #000; padding: 20px 0; }
+            .card-custom { border: 1px solid #eee !important; box-shadow: none !important; }
+        }
+        .print-header { display: none; }
+        .qr-placeholder { border: 2px dashed #e2e8f0; border-radius: 20px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="d-flex align-items-center gap-2 mb-5 text-primary fw-bold fs-4">
+            <i class="bi bi-lightning-charge-fill"></i> LocalPay
+        </div>
+        <nav class="nav flex-column gap-3 mb-auto">
+            <a class="nav-link active fw-bold p-0 text-primary" href="#"><i class="bi bi-grid-1x2 me-2"></i> Dashboard</a>
+            <a class="nav-link text-muted p-0" href="#qr-section"><i class="bi bi-qr-code me-2"></i> Cobrar QR</a>
+            <a class="nav-link text-muted p-0" href="#search-section"><i class="bi bi-search me-2"></i> Auditoría</a>
+            <a class="nav-link text-muted p-0" href="#profile-section"><i class="bi bi-gear me-2"></i> Perfil</a>
+        </nav>
+        <div class="border-top pt-4 mt-4">
+            <p class="small fw-bold mb-1" id="side-name">Admin</p>
+            <button class="btn btn-link text-danger p-0 small text-decoration-none" onclick="logout()"><i class="bi bi-box-arrow-left me-1"></i> Cerrar Sesión</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-5 no-print">
+            <div>
+                <h2 class="fw-bold m-0">Hola, <span id="user-greeting" class="text-primary">Admin</span> 👋</h2>
+                <p class="text-muted">Sucursal: <span class="fw-semibold">Caja Principal 01</span></p>
+            </div>
+            <button class="btn btn-dark rounded-pill px-4" onclick="imprimirCierre()">
+                <i class="bi bi-printer me-2"></i> Cierre de Caja
+            </button>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-4"><div class="card card-custom p-4 border-start border-primary border-5">
+                <small class="text-muted fw-bold">TOTAL VENTAS</small><h2 id="kpi-ventas" class="fw-bold text-primary mt-1">$45.200</h2>
+            </div></div>
+            <div class="col-md-4"><div class="card card-custom p-4 border-start border-danger border-5">
+                <small class="text-muted fw-bold">EGRESOS</small><h2 id="kpi-egresos" class="fw-bold text-danger mt-1">$5.000</h2>
+            </div></div>
+            <div class="col-md-4"><div class="card card-custom p-4 bg-success text-white shadow-lg">
+                <small class="fw-bold opacity-75">NETO EN CAJA</small><h2 id="kpi-neto" class="fw-bold mt-1">$40.200</h2>
+            </div></div>
+        </div>
+
+        <div id="qr-section" class="row g-4 mb-5 no-print">
+            <div class="col-md-7">
+                <div class="card card-custom p-4 h-100">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-qr-code-scan me-2"></i>Generador de Cobro</h5>
+                    <div class="mb-3">
+                        <label class="small fw-bold mb-1">Monto a Cobrar ($)</label>
+                        <input type="number" id="qr-amount" class="form-control form-control-lg bg-light border-0" placeholder="0.00" onkeyup="updateQR()">
+                    </div>
+                    <div class="mb-4">
+                        <label class="small fw-bold mb-1">Concepto</label>
+                        <input type="text" id="qr-concept" class="form-control bg-light border-0" placeholder="Ej: Venta de productos">
+                    </div>
+                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-3" onclick="confirmarCobro()">Activar Semáforo</button>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card card-custom p-4 text-center h-100 shadow-sm" id="semaforo-box">
+                    <h6 class="fw-bold mb-3 text-muted">ESTADO DE COBRO</h6>
+                    <div class="qr-placeholder mb-3">
+                        <img id="qr-img" src="" class="img-fluid d-none" style="width: 150px;">
+                        <div id="qr-empty"><i class="bi bi-qr-code opacity-25 fs-1"></i><p class="small text-muted mt-2">QR Pendiente</p></div>
+                    </div>
+                    <div id="semaforo-ui" class="semaforo-dot dot-pending"></div>
+                    <span id="semaforo-text" class="fw-bold small text-uppercase">Esperando Pago...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="search-section" class="card card-custom p-4 mb-5">
+            <h5 class="fw-bold mb-4 no-print"><i class="bi bi-search-heart me-2"></i>Auditoría de Movimientos</h5>
+            <div class="input-group mb-4 no-print shadow-sm rounded-3">
+                <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="search-input" class="form-control border-0" placeholder="Buscar ID, Monto o Estado..." onkeyup="smartFilter()">
+                <select id="type-filter" class="form-select border-0 bg-light w-25" onchange="smartFilter()">
+                    <option value="ALL">Todos</option><option value="INGRESO">Ingresos</option><option value="EGRESO">Egresos</option>
+                </select>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr class="small text-muted"><th>ID</th><th>CONCEPTO</th><th>MONTO</th><th>ESTADO</th></tr>
+                    </thead>
+                    <tbody id="feed-body" class="small">
+                        <tr data-type="INGRESO"><td><b>#1029</b></td><td>Venta General</td><td class="text-success fw-bold">+$4.500</td><td><span class="badge bg-success-subtle text-success">APROBADO</span></td></tr>
+                        <tr data-type="EGRESO"><td><b>#E-04</b></td><td>Proveedor Pan</td><td class="text-danger fw-bold">-$3.000</td><td><span class="badge bg-danger-subtle text-danger">EGRESO</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="profile-section" class="card card-custom p-4 no-print">
+            <h5 class="fw-bold mb-3">Configuración de Perfil</h5>
+            <div class="row align-items-end">
+                <div class="col-md-6"><label class="small fw-bold">Nombre de Caja</label><input type="text" id="new-name" class="form-control" placeholder="Admin Sucursal"></div>
+                <div class="col-md-6"><button class="btn btn-outline-primary" onclick="guardarPerfil()">Guardar Cambios</button></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 1. SEGURIDAD
+        if(localStorage.getItem('isLoggedIn') !== 'true') window.location.href = 'login.html';
+        
+        // 2. INICIO
+        document.addEventListener('DOMContentLoaded', () => {
+            const name = localStorage.getItem('userName') || 'Admin';
+            document.getElementById('user-greeting').innerText = name;
+            document.getElementById('side-name').innerText = name;
+            document.getElementById('new-name').value = name;
+            updateStats();
+        });
+
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+        // 3. GENERADOR QR
+        function updateQR() {
+            const amount = document.getElementById('qr-amount').value;
+            const img = document.getElementById('qr-img');
+            const empty = document.getElementById('qr-empty');
+            if(amount > 0) {
+                img.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=LocalPay_${amount}`;
+                img.classList.remove('d-none'); empty.classList.add('d-none');
+            } else {
+                img.classList.add('d-none'); empty.classList.remove('d-none');
+            }
+        }
+
+        function confirmarCobro() {
+            const amount = parseFloat(document.getElementById('qr-amount').value);
+            if(!amount) return alert("Ingresa un monto");
+            
+            const dot = document.getElementById('semaforo-ui');
+            const txt = document.getElementById('semaforo-text');
+            const box = document.getElementById('semaforo-box');
+            
+            dot.className = 'semaforo-dot dot-pending';
+            txt.innerText = 'ESPERANDO PAGO...';
+            box.style.background = 'white';
+
+            // Simulación de respuesta de API (3 segundos)
+            setTimeout(() => {
+                dot.className = 'semaforo-dot dot-success';
+                txt.innerText = '¡PAGO APROBADO!';
+                box.style.background = '#f0fdf4';
+                
+                // Registrar en tabla
+                const row = `<tr data-type="INGRESO"><td><b>#${Math.floor(Math.random()*900)+100}</b></td><td>Cobro QR</td><td class="text-success fw-bold">+$${amount.toLocaleString()}</td><td><span class="badge bg-success-subtle text-success">APROBADO</span></td></tr>`;
+                document.getElementById('feed-body').insertAdjacentHTML('afterbegin', row);
+                updateStats();
+            }, 3000);
+        }
+
+        // 4. ESTADÍSTICAS Y FILTROS
+        function updateStats() {
+            let v = 45200; let e = 5000;
+            document.getElementById('kpi-ventas').innerText = `$${v.toLocaleString()}`;
+            document.getElementById('kpi-egresos').innerText = `$${e.toLocaleString()}`;
+            document.getElementById('kpi-neto').innerText = `$${(v-e).toLocaleString()}`;
+        }
+
+        function smartFilter() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const t = document.getElementById('type-filter').value;
+            document.querySelectorAll('#feed-body tr').forEach(row => {
+                const matchQ = row.innerText.toLowerCase().includes(q);
+                const matchT = t === 'ALL' || row.getAttribute('data-type') === t;
+                row.style.display = (matchQ && matchT) ? '' : 'none';
+            });
+        }
+
+        // 5. PERFIL E IMPRESIÓN
+        function guardarPerfil() {
+            const n = document.getElementById('new-name').value;
+            if(n) { localStorage.setItem('userName', n); location.reload(); }
+        }
+
+        function imprimirCierre() {
+            const h = `<div class="print-header"><h2>LocalPay - REPORTE DE CIERRE</h2><p>Responsable: ${localStorage.getItem('userName')}</p><p>Fecha: ${new Date().toLocaleString()}</p></div>`;
+            document.querySelector('.main-content').insertAdjacentHTML('afterbegin', h);
+            window.print();
+            document.querySelector('.print-header').remove();
+        }
+    </script>
+</body>
+</html>

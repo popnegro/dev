@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación LocalPay</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .form-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
+        h2 { color: #2d3436; margin-bottom: 10px; }
+        p { color: #636e72; font-size: 14px; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #2d3436; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #dfe6e9; border-radius: 6px; box-sizing: border-box; }
+        button { background: #00b894; color: white; border: none; padding: 15px; width: 100%; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #00947a; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Validación LocalPay 💳</h2>
+    <p>Ayúdanos a mejorar los pagos en tu comercio.</p>
+    
+    <form action="https://formspree.io/f/tu_id_aqui" method="POST">
+        <label>Nombre del Comercio</label>
+        <input type="text" name="comercio" placeholder="Ej. Café Central" required>
+
+        <label>¿Cuál es tu mayor problema con los pagos actuales?</label>
+        <select name="problema">
+            <option value="comisiones">Comisiones altas</option>
+            <option value="demora">Demora en depósitos</option>
+            <option value="soporte">Mal soporte técnico</option>
+            <option value="otro">Otro</option>
+        </select>
+
+        <label>¿Probarías LocalPay si redujera tus costos en un 20%?</label>
+        <select name="interes">
+            <option value="si">¡Sí, seguro!</option>
+            <option value="talvez">Tal vez, necesito más info</option>
+            <option value="no">No por ahora</option>
+        </select>
+
+        <label>WhatsApp o Email de contacto</label>
+        <input type="text" name="contacto" placeholder="Para enviarte el acceso beta" required>
+
+        <button type="submit">Enviar Respuestas</button>
+    </form>
+</div>
+
+</body>
+</html>

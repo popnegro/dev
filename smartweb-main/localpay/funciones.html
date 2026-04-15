@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalPay V2.5 | Dashboard & Admin Suite</title>
+    
+    <!-- Frameworks & Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-body: #f8fafc;
+            --text-main: #1e293b;
+        }
+
+        html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); overflow-x: hidden; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: var(--sidebar-width); height: 100vh; position: fixed;
+            left: 0; top: 0; background: #ffffff; border-right: 1px solid #e2e8f0;
+            padding: 1.5rem; z-index: 1050; overflow-y: auto;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 12px; color: #64748b;
+            text-decoration: none; padding: 0.8rem 1rem; border-radius: 10px;
+            font-size: 0.9rem; transition: 0.3s; margin-bottom: 4px;
+        }
+
+        .nav-link:hover, .nav-link.active { background: #eff6ff; color: var(--primary); font-weight: 600; }
+
+        .nav-group-title {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            color: #94a3b8; letter-spacing: 0.05rem; margin: 1.5rem 0 0.5rem 0.5rem;
+        }
+
+        /* CONTENT */
+        .main-content { margin-left: var(--sidebar-width); padding: 3rem; max-width: 1200px; }
+        
+        .doc-section {
+            background: white; padding: 2.5rem; border-radius: 20px;
+            border: 1px solid #e2e8f0; margin-bottom: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            opacity: 0; transform: translateY(20px); transition: 0.6s ease-out;
+        }
+        .doc-section.reveal-active { opacity: 1; transform: translateY(0); }
+
+        /* CARDS */
+        .kpi-card { border: none; border-radius: 16px; transition: 0.3s; }
+        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+        .badge-role { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; margin-left: auto; font-weight: 700; }
+        
+        pre { background: #1e293b; color: #f8fafc; padding: 1.2rem; border-radius: 12px; font-size: 0.85rem; overflow-x: auto; }
+
+        /* LOGIN OVERLAY SIMULATION */
+        .login-box { max-width: 400px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 20px; background: #fff; }
+
+        @media (max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: relative; border-bottom: 1px solid #e2e8f0; }
+            .main-content { margin-left: 0; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="brand d-flex align-items-center gap-2 mb-4 border-bottom pb-3">
+        <div class="bg-primary text-white p-2 rounded-3"><i class="bi bi-lightning-charge-fill"></i></div>
+        <div><h6 class="m-0 fw-bold">LocalPay Turbo</h6><small class="text-muted text-uppercase">V2.5 Admin</small></div>
+    </div>
+
+    <nav id="nav-spy">
+        <div class="nav-group-title">Seguridad</div>
+        <a href="#login" class="nav-link"><i class="bi bi-shield-lock"></i> Pantalla Login</a>
+        <a href="#admin-users" class="nav-link"><i class="bi bi-person-gear"></i> Usuarios</a>
+
+        <div class="nav-group-title">Negocio (Owner)</div>
+        <a href="#dashboard" class="nav-link active"><i class="bi bi-grid-1x2"></i> Dashboard Live</a>
+        <a href="#costos" class="nav-link"><i class="bi bi-cash-coin"></i> Costos & ROI</a>
+
+        <div class="nav-group-title">Operaciones</div>
+        <a href="#semaforo" class="nav-link"><i class="bi bi-broadcast-pin"></i> Semáforo RT</a>
+        <a href="#roadmap" class="nav-link"><i class="bi bi-calendar3"></i> Plan 7 Días</a>
+    </nav>
+</aside>
+
+<main class="main-content">
+
+    <!-- LOGIN SECTION -->
+    <section id="login" class="doc-section">
+        <div class="login-box shadow-sm">
+            <div class="text-center mb-4">
+                <div class="bg-primary text-white d-inline-block p-3 rounded-circle mb-3">
+                    <i class="bi bi-lock-fill fs-3"></i>
+                </div>
+                <h4 class="fw-bold">Admin Login</h4>
+                <p class="small text-muted">Acceso restringido a personal autorizado</p>
+            </div>
+            <form onsubmit="event.preventDefault(); alert('Login exitoso (Simulación)');">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Email</label>
+                    <input type="email" class="form-control rounded-3" placeholder="admin@localpay.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Contraseña</label>
+                    <input type="password" class="form-control rounded-3" placeholder="••••••••">
+                </div>
+                <button class="btn btn-primary w-100 rounded-3 py-2 fw-bold">Ingresar</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- DASHBOARD SECTION -->
+    <section id="dashboard" class="doc-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold m-0"><i class="bi bi-graph-up text-primary me-2"></i>Dashboard Real-Time</h2>
+            <button class="btn btn-dark btn-sm rounded-pill px-3" onclick="exportExcel()">
+                <i class="bi bi-file-earmark-excel me-1"></i> Exportar Reporte
+            </button>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card kpi-card p-4 shadow-sm bg-white border-start border-primary border-5">
+                    <small class="text-muted fw-bold">VENTAS HOY</small>
+                    <h2 class="fw-bold mb-0 text-primary">$124.500</h2>
+                    <span class="text-success small"><i class="bi bi-caret-up-fill"></i> +15%</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card kpi-card p-4 shadow-sm bg-white border-start border-danger border-5">
+                    <small class="text-muted fw-bold">EGRESOS</small>
+                    <h2 class="fw-bold mb-0 text-danger">$15.200</h2>
+                    <span class="text-muted small">Retiros de caja</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card kpi-card p-4 shadow-sm bg-success text-white border-0">
+                    <small class="opacity-75 fw-bold">NETO DISPONIBLE</small>
+                    <h2 class="fw-bold mb-0">$109.300</h2>
+                    <span class="opacity-75 small">Saldo real en local</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="p-4 border rounded-4 bg-white shadow-sm h-100">
+                    <h6 class="fw-bold mb-4">Curva de Transacciones (24h)</h6>
+                    <canvas id="salesChart" height="200"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="p-4 border rounded-4 bg-white shadow-sm h-100">
+                    <h6 class="fw-bold mb-3">Últimas Alertas</h6>
+                    <div class="small list-group list-group-flush">
+                        <div class="list-group-item px-0 border-0 mb-2">
+                            <span class="badge bg-success-subtle text-success mb-1">PAGO OK</span>
+                            <div class="fw-bold">Venta #502 - $8.400</div>
+                            <div class="text-muted">Cajero: Juan P. - Hace 3m</div>
+                        </div>
+                        <div class="list-group-item px-0 border-0 mb-2">
+                            <span class="badge bg-danger-subtle text-danger mb-1">EGRESO</span>
+                            <div class="fw-bold">Pago Proveedor - $5.000</div>
+                            <div class="text-muted">Autorizó: Admin - Hace 12m</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- USER MANAGEMENT -->
+    <section id="admin-users" class="doc-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold m-0">Gestión de Personal</h2>
+            <button class="btn btn-outline-primary btn-sm rounded-3">
+                <i class="bi bi-person-plus me-1"></i> Invitar
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border-top">
+                <thead class="bg-light">
+                    <tr class="small text-muted fw-bold">
+                        <th>NOMBRE</th>
+                        <th>ROL</th>
+                        <th>ESTADO</th>
+                        <th class="text-end">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    <tr>
+                        <td><b>Admin Local</b><br><span class="text-muted">admin@tienda.com</span></td>
+                        <td><span class="badge bg-primary-subtle text-primary">Owner</span></td>
+                        <td><span class="text-success">● Conectado</span></td>
+                        <td class="text-end"><i class="bi bi-three-dots-vertical cursor-pointer"></i></td>
+                    </tr>
+                    <tr>
+                        <td><b>Cajero 01</b><br><span class="text-muted">caja1@tienda.com</span></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">Cajero</span></td>
+                        <td><span class="text-muted">○ Desconectado</span></td>
+                        <td class="text-end"><i class="bi bi-three-dots-vertical cursor-pointer"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- COSTOS SECTION -->
+    <section id="costos" class="doc-section">
+        <h2 class="fw-bold mb-4">Inversión LowCost</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="p-4 rounded-4 border-0 bg-light shadow-sm h-100">
+                    <h5 class="fw-bold text-primary mb-3">Setup Único</h5>
+                    <h1 class="fw-bold">$500 <span class="fs-6 text-muted">USD</span></h1>
+                    <hr>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">✓ Integración Mercado Pago API</li>
+                        <li class="mb-2">✓ Configuración Dashboard</li>
+                        <li class="mb-2">✓ Implementación Semáforo RT</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-4 rounded-4 border-0 bg-primary text-white shadow-sm h-100">
+                    <h5 class="fw-bold mb-3">Suscripción</h5>
+                    <h1 class="fw-bold">$20 <span class="fs-6 opacity-75">USD / mes</span></h1>
+                    <hr>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">✓ Soporte Técnico 24/7</li>
+                        <li class="mb-2">✓ Actualizaciones de Seguridad</li>
+                        <li class="mb-2">✓ Hosting Serverless Incluido</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+    // DASHBOARD CHART
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
+            datasets: [{
+                label: 'Ventas ($)',
+                data: [15000, 32000, 58000, 42000, 39000, 75000, 62000],
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+        }
+    });
+
+    // REVEAL ON SCROLL
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) entry.target.classList.add('reveal-active');
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.doc-section').forEach(section => observer.observe(section));
+
+    // SCROLLSPY
+    window.addEventListener('scroll', () => {
+        let current = "";
+        document.querySelectorAll('section').forEach(section => {
+            if (pageYOffset >= section.offsetTop - 150) current = section.getAttribute("id");
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove("active");
+            if (link.getAttribute("href") === `#${current}`) link.classList.add("active");
+        });
+    });
+
+    function exportExcel() {
+        alert("Generando Reporte: LocalPay_Analytics_Final.xlsx");
+    }
+</script>
+
+</body>
+</html>

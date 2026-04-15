@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación Estratégica | PMV AdultTech Telegram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .bg-metropolitan { background-color: #020617; }
+    </style>
+</head>
+<body class="bg-metropolitan text-slate-300 antialiased">
+
+    <header class="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-950/90 backdrop-blur-md">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                    <i class="fa fa-terminal text-white"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-bold text-white block leading-none">AdultTech <span class="text-blue-500 italic">PMV</span></span>
+                </div>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-xs font-bold uppercase tracking-widest">
+                <a href="#arquitectura" class="hover:text-blue-400 transition">Sistemas</a>
+                <a href="#escalabilidad" class="hover:text-blue-400 transition">Negocio</a>
+                <a href="#riesgos" class="hover:text-red-400 transition">Riesgos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 flex flex-col lg:flex-row gap-12">
+        
+        <aside class="lg:w-1/4">
+            <div class="sticky top-28 space-y-8">
+                <div>
+                    <h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-5">Navegación Técnica</h5>
+                    <ul class="space-y-4 text-sm font-medium">
+                        <li><a href="#arquitectura" class="hover:text-blue-400 flex items-center gap-2"><i class="fa fa-network-wired w-4"></i> Arquitectura</a></li>
+                        <li><a href="#endpoint" class="hover:text-blue-400 flex items-center gap-2"><i class="fa fa-code w-4"></i> API Webhooks</a></li>
+                        <li><a href="#glosario" class="hover:text-blue-400 flex items-center gap-2"><i class="fa fa-list w-4"></i> Glosario</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-5">Business Intelligence</h5>
+                    <ul class="space-y-4 text-sm font-medium">
+                        <li><a href="#escalabilidad" class="hover:text-blue-400 flex items-center gap-2"><i class="fa fa-chart-line w-4"></i> Escalabilidad</a></li>
+                        <li><a href="#riesgos" class="hover:text-red-400 flex items-center gap-2 text-red-500/80"><i class="fa fa-shield-virus w-4"></i> Mitigación de Riesgos</a></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <article class="lg:w-3/4 space-y-20">
+            
+            <section id="resumen">
+                <h1 class="text-5xl font-black text-white mb-6 tracking-tighter">Infraestructura de Suscripción Automatizada.</h1>
+                <p class="text-xl text-slate-400 leading-relaxed max-w-2xl">
+                    Modelo de negocio "Zero-Maintenance" diseñado para la comercialización de contenido exclusivo legal mediante el ecosistema de Telegram.
+                </p>
+            </section>
+
+            <section id="arquitectura">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="w-8 h-1 bg-blue-600"></span> Arquitectura del Sistema
+                </h2>
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl font-mono text-xs text-blue-400 overflow-x-auto leading-relaxed shadow-inner">
+                    [CLIENTE] --(Pago)--> [CHECKOUT ODOO/REACT]<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;[WEBHOOK] <--------- [PASARELA CCBILL/SEGPAY]<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;[API VERCEL/NODE.JS] --(Valida & Genera Token)--><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;[TELEGRAM BOT API] --(Invite Link 1 Uso)--> [USUARIO FINAL]
+                </div>
+            </section>
+
+            <section id="endpoint">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <span class="w-8 h-1 bg-blue-600"></span> API Webhook Payment
+                </h2>
+                <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+                    <div class="bg-slate-900 px-6 py-3 flex justify-between items-center border-b border-slate-800">
+                        <span class="text-xs font-bold text-blue-400 tracking-widest uppercase">POST /api/v1/payment</span>
+                        <span class="bg-blue-600/20 text-blue-400 text-[10px] px-2 py-1 rounded">JSON</span>
+                    </div>
+                    <pre class="p-8 text-sm text-blue-300 leading-relaxed"><code>{
+  "email": "usuario@ejemplo.com",
+  "status": "success",
+  "transaction_id": "TX_9988221",
+  "access_type": "monthly_premium"
+}</code></pre>
+                </div>
+            </section>
+
+            <section id="glosario">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="w-8 h-1 bg-blue-600"></span> Glosario Técnico
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass p-5 rounded-xl">
+                        <span class="text-blue-500 font-bold text-xs uppercase tracking-widest">WebRTC</span>
+                        <p class="text-sm mt-2">Transmisión de video en vivo con latencia ultra-baja (< 1s) para videollamadas privadas.</p>
+                    </div>
+                    <div class="glass p-5 rounded-xl">
+                        <span class="text-blue-500 font-bold text-xs uppercase tracking-widest">High Risk Merchant</span>
+                        <p class="text-sm mt-2">Clasificación bancaria específica para el sector de entretenimiento para adultos.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="escalabilidad">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                    <span class="w-8 h-1 bg-blue-600"></span> Proyección de Escalabilidad
+                </h2>
+                <div class="overflow-hidden rounded-2xl border border-slate-800 shadow-2xl">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-slate-500 text-[10px] uppercase font-black">
+                            <tr>
+                                <th class="px-6 py-4">Suscripciones Activas</th>
+                                <th class="px-6 py-4">Costo Infra (Telegr)</th>
+                                <th class="px-6 py-4">Pasarela (12%)</th>
+                                <th class="px-6 py-4 text-blue-400">Utilidad Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800 bg-slate-950/30">
+                            <tr>
+                                <td class="px-6 py-5 font-bold text-white">100</td>
+                                <td class="px-6 py-5 text-green-500 font-bold">$0.00</td>
+                                <td class="px-6 py-5 text-red-500/50">-$360</td>
+                                <td class="px-6 py-5 text-white font-black">$2,640</td>
+                            </tr>
+                            <tr class="bg-blue-600/5">
+                                <td class="px-6 py-5 font-bold text-white">1,000</td>
+                                <td class="px-6 py-5 text-green-500 font-bold">$0.00</td>
+                                <td class="px-6 py-5 text-red-500/50">-$3,600</td>
+                                <td class="px-6 py-5 text-white font-black">$26,380</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="riesgos">
+                <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3 text-red-500">
+                    <span class="w-8 h-1 bg-red-600"></span> Mitigación de Riesgos
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-red-950/10 border border-red-900/30 rounded-2xl">
+                        <h4 class="font-bold text-red-400 mb-2">Bloqueo de Telegram</h4>
+                        <p class="text-xs leading-relaxed">Mantenemos una base de datos propia en Odoo/PostgreSQL. Si el canal cae, re-enviamos invitaciones a un canal espejo en 60 segundos.</p>
+                    </div>
+                    <div class="p-6 bg-yellow-950/10 border border-yellow-900/30 rounded-2xl">
+                        <h4 class="font-bold text-yellow-400 mb-2">Leaks de Contenido</h4>
+                        <p class="text-xs leading-relaxed">Activación forzada de 'Restricted Access' y marcas de agua dinámicas con ID de usuario para identificar piratería.</p>
+                    </div>
+                </div>
+            </section>
+
+        </article>
+    </main>
+
+    <footer class="border-t border-slate-900 mt-24 py-12 text-center text-[10px] uppercase tracking-[0.3em] text-slate-600">
+        &copy; 2026 | Strategic Digital Solutions
+    </footer>
+
+</body>
+</html>

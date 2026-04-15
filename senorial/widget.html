@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Taxi Widget White Label</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .widget-taxi { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #000; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        .info { font-size: 0.9em; color: #555; margin-top: 10px; }
+        #status-box { margin-top: 15px; padding: 10px; background: #e9ecef; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="widget-taxi">
+    <h3>Pedir Taxi</h3>
+    <input type="text" id="userName" placeholder="Nombre Completo">
+    <input type="text" id="origin" placeholder="Punto de Origen (Geolocalizando...)" readonly>
+    <input type="text" id="destination" placeholder="¿A dónde vas?">
+    
+    <div id="estimate" class="info"></div>
+    <button onclick="solicitarTaxi()">Pedir Ahora</button>
+
+    <div id="status-box">
+        <strong>Estado del viaje:</strong>
+        <p id="driver-info">Esperando asignación...</p>
+        <div id="payment-area"></div>
+    </div>
+</div>
+
+<script>
+    let autocomplete;
+
+    // 1. Cargar persistencia de nombre inmediatamente
+    const nameInput = document.getElementById('userName');
+    nameInput.value = localStorage.getItem('userTaxiName') || '';
+    nameInput.addEventListener('input', () => {
+        localStorage.setItem('userTaxiName', nameInput.value);
+    });
+
+    // 2. Definir solicitarTaxi antes de que se use
+    function solicitarTaxi() {
+        const user = document.getElementById('userName').value;
+        const dest = document.getElementById('destination').value;
+
+        if (!user || !dest) {
+            alert("Por favor, completa tu nombre y destino.");
+            return;
+        }
+
+        document.getElementById('status-box').style.display = 'block';
+        console.log("Pedido iniciado para:", user, "hacia", dest);
+        alert("Pedido enviado al Dashboard. Espera confirmación.");
+    }
+
+    // 3. Inicializar Google Maps
+    function initMaps() {
+        console.log("Google Maps cargado correctamente.");
+        const inputDestino = document.getElementById('destination');
+        
+        autocomplete = new google.maps.places.Autocomplete(inputDestino);
+        
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+
+            // Simulación de tarifa
+            const randomDist = (Math.random() * 10 + 2).toFixed(2);
+            const tarifa = (randomDist * 150 + 400).toFixed(0);
+            document.getElementById('estimate').innerText = `Distancia: ${randomDist} km | Tarifa: $${tarifa}`;
+        });
+
+        // Geolocalización
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(p => {
+                document.getElementById('origin').value = `Ubicación actual (${p.coords.latitude.toFixed(4)})`;
+            }, (err) => console.warn("Error geolocalización:", err.message));
+        }
+    }
+</script>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmTzHBhtQ4E8BG6DL0xdrEOYdZmQEBXkI&libraries=places&callback=initMaps">
+</script>
+
+</body>
+</html>
