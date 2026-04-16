@@ -1,14 +1,14 @@
 require('dotenv').config();
 const express = require('express');
-const { createServer } = require('node:http');
-const { Server } = require('socket.io');
 const cors = require('cors');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
+const Pusher = require("pusher");
 
 const app = express();
 
 // 1. Configuración de Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // Requerido para procesar la autenticación de Pusher
 app.use(cors());
 
 // 2. Configuración Mercado Pago (Usando variables de entorno)
@@ -16,20 +16,54 @@ const client = new MercadoPagoConfig({
     accessToken: process.env.MP_ACCESS_TOKEN 
 });
 
-const httpServer = createServer(app);
-
-// 3. Configuración de Socket.io
-const io = new Server(httpServer, {
-    cors: {
-        origin: ["http://127.0.0.1:5500", "https://taxichat-nine.vercel.app"],
-        methods: ["GET", "POST"]
-    }
+// 3. Configuración de Pusher
+const pusher = new Pusher({
+  appId: process.env.PUSHER_APP_ID,
+  key: process.env.PUSHER_KEY,
+  secret: process.env.PUSHER_SECRET,
+  cluster: process.env.PUSHER_CLUSTER,
+  useTLS: true
 });
 
-// 4. Endpoint para Mercado Pago
+// Nuevo Endpoint de Autenticación para Canales Privados
+app.post('/pusher/auth', (req, res) => {
+    const socketId = req.body.socket_id;
+    const channel = req.body.channel_name;
+
+    // Aquí deberías verificar la identidad del usuario (usando JWT, sesiones, etc.)
+    // Por ahora, autorizamos la conexión basándonos en el socket_id proporcionado.
+    const authResponse = pusher.authenticate(socketId, channel);
+    res.send(authResponse);
+});
+
+// 4. Endpoint para Configuración de Marca (Bootstrap)
+app.get('/api/bootstrap', (req, res) => {
+    const { brand } = req.query;
+    
+    // Mapeo dinámico usando variables de entorno
+    const tenants = {
+        'mendoza': {
+            name: 'Taxi Mendoza',
+            theme: { primary: '#fbbf24', secondary: '#0f172a', radius: '1.5rem' },
+            maps_key: process.env.MAPS_MENDOZA
+        },
+        'taxichat-nine': {
+            name: 'TaxiGo Demo',
+            theme: { primary: '#10b981', secondary: '#064e3b', radius: '0.5rem' },
+            maps_key: process.env.MAPS_DEMO
+        }
+    };
+
+    const config = tenants[brand] || tenants['mendoza'];
+    res.json(config);
+});
+
+// 5. Endpoint para Mercado Pago
 app.post('/create-preference', async (req, res) => {
     try {
         const preference = new Preference(client);
+        const baseUrl = process.env.FRONTEND_URL || "https://taxichat-nine.vercel.app";
+        
         const result = await preference.create({
             body: {
                 items: [{
@@ -39,8 +73,8 @@ app.post('/create-preference', async (req, res) => {
                     currency_id: 'ARS' 
                 }],
                 back_urls: {
-                    success: "https://taxichat-nine.vercel.app/success.html",
-                    failure: "https://taxichat-nine.vercel.app/failure.html",
+                    success: `${baseUrl}/success.html`,
+                    failure: `${baseUrl}/failure.html`,
                 },
                 auto_return: "approved",
             }
@@ -53,32 +87,27 @@ app.post('/create-preference', async (req, res) => {
     }
 });
 
-// 5. Lógica de Sockets
-io.on('connection', (socket) => {
-    console.log('📱 Dispositivo conectado:', socket.id);
-
-    socket.on('asignar-taxi', (data) => {
-        io.emit('confirmacion-cliente', data);
-    });
-
-    socket.on('enviar-link-pago', (data) => {
-        io.emit('recibir-pago', data);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('❌ Dispositivo desconectado');
-    });
+// 6. Endpoints de Eventos en Tiempo Real (Pusher)
+app.post('/api/asignar-taxi', async (req, res) => {
+    const { userId, ...data } = req.body;
+    // Emitimos a un canal privado único para ese usuario
+    const channelName = `private-user-${userId}`;
+    await pusher.trigger(channelName, "confirmacion-cliente", data);
+    res.json({ status: "Evento enviado a canal privado", channel: channelName });
 });
 
-// 6. Encender servidor
+app.post('/api/enviar-link-pago', async (req, res) => {
+    const { userId, ...data } = req.body;
+    const channelName = `private-user-${userId}`;
+    await pusher.trigger(channelName, "recibir-pago", data);
+    res.json({ status: "Link de pago enviado a canal privado", channel: channelName });
+});
+
+// 7. Encender servidor
 const PORT = process.env.PORT || 3000;
 
-// Solo ejecutar listen si NO estamos en Vercel (entorno de producción)
-if (process.env.NODE_ENV !== 'production') {
-    httpServer.listen(PORT, () => {
-        console.log(`✅ Servidor local corriendo en el puerto ${PORT}`);
-    });
-}
+app.listen(PORT, () => {
+    console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
+});
 
-// Exportar para que Vercel lo maneje como función
 module.exports = app;

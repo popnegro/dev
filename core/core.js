@@ -3,13 +3,12 @@
  */
 const TaxiGo = {
     config: null,
+    map: null,
 
     async init() {
         const hostname = window.location.hostname;
         // Detectar ID de marca desde el subdominio
-        const brandID = (hostname.includes('localhost') || hostname.includes('vercel.app'))
-            ? hostname.split('.')[0]
-            : hostname.split('.')[0];
+        const brandID = hostname.split('.')[0];
 
         try {
             const response = await fetch(`/api/bootstrap?brand=${brandID}`);
@@ -18,6 +17,7 @@ const TaxiGo = {
 
             this.applyTheme();
             this.applyUI();
+            this.loadGoogleMaps();
             
             console.log(`🚀 Empresa cargada: ${this.config.name}`);
             return this.config;
@@ -38,6 +38,34 @@ const TaxiGo = {
     applyUI() {
         document.title = `${this.config.name} | Despacho`;
         document.querySelectorAll('.brand-name').forEach(el => el.innerText = this.config.name);
+    },
+
+    loadGoogleMaps() {
+        if (!this.config || !this.config.maps_key) return;
+
+        // Si el script ya existe, simplemente inicializamos el mapa
+        if (window.google && window.google.maps) {
+            this.initMap();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${this.config.maps_key}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        // El evento onload es la clave para la inicialización segura
+        script.onload = () => this.initMap();
+        document.head.appendChild(script);
+    },
+
+    initMap() {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) return;
+
+        this.map = new google.maps.Map(mapContainer, {
+            center: { lat: -32.8895, lng: -68.8458 }, // Mendoza por defecto
+            zoom: 14
+        });
     },
 
     applyDefaultTheme() {
