@@ -19,10 +19,7 @@ const TaxiGo = {
             this.applyUI();
             this.loadGoogleMaps();
             
-            console.log(`🚀 Empresa cargada: ${this.config.name}. Disparando taxichat-ready...`);
-            // Notificar a otros scripts que la configuración está lista
-            document.dispatchEvent(new CustomEvent('taxichat-ready', { detail: this.config }));
-
+            console.log(`🚀 Empresa cargada: ${this.config.name}`);
             return this.config;
         } catch (error) {
             console.error("❌ Error Core:", error);
@@ -63,12 +60,6 @@ const TaxiGo = {
 
     initMap() {
         const mapContainer = document.getElementById('map');
-        
-        // Si existe la función global initMaps (usada en widget.html), la llamamos
-        if (typeof window.initMaps === 'function') {
-            window.initMaps();
-        }
-
         if (!mapContainer) return;
 
         this.map = new google.maps.Map(mapContainer, {

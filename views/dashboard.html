@@ -52,9 +52,9 @@
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
+<<<<<<< HEAD
     const SERVER_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
         ? `${window.location.protocol}//${window.location.host}`
         : 'https://dev-eta-seven.vercel.app';
@@ -109,9 +109,39 @@
                 document.querySelector('.status-badge').innerText = `Pedido Cancelado por el Usuario`;
             }
         });
+=======
+    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
+
+    let userId = "123"; // ID por defecto
+
+    // Configurar Pusher para el Operador
+    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
+        cluster: 'TU_CLUSTER_REAL_AQUI',
+        authEndpoint: `${SERVER_URL}/pusher/auth`
     });
 
-    function selectOrder(event, id, ticket, name) {
+    const adminChannel = pusher.subscribe('private-admin');
+
+    // Escuchar nuevos pedidos
+    adminChannel.bind('nuevo-pedido', (data) => {
+        const list = document.getElementById('orders-list');
+        const emptyMsg = list.querySelector('.empty-msg');
+        if(emptyMsg) emptyMsg.remove();
+
+        const orderDiv = document.createElement('div');
+        orderDiv.className = 'order-item';
+        orderDiv.onclick = () => selectOrder(data.userId, data.id, data.nombre);
+        orderDiv.innerHTML = `
+            <strong>#${data.id} - ${data.nombre}</strong><br>
+            <small>${data.destino.substring(0, 25)}...</small>
+        `;
+        list.prepend(orderDiv);
+>>>>>>> parent of 9b0ec3e (Fix subdomain)
+    });
+
+    function selectOrder(id, ticket, name) {
         userId = id;
         document.querySelector('.status-badge').innerText = `Pedido Pendiente #${ticket} - ${name}`;
         document.querySelectorAll('.order-item').forEach(el => el.classList.remove('active'));

@@ -104,9 +104,9 @@
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
+<<<<<<< HEAD
     const SERVER_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
         ? `${window.location.protocol}//${window.location.host}`
         : 'https://dev-eta-seven.vercel.app';
@@ -170,6 +170,21 @@
             `;
         });
     });
+=======
+    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
+
+    // Inicializar Pusher con soporte para autenticación de canales privados
+    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
+        cluster: 'TU_CLUSTER_REAL_AQUI',
+        authEndpoint: `${SERVER_URL}/pusher/auth`
+    });
+
+    // Suscribirse al canal privado del usuario (ID estático para pruebas)
+    const userId = "123"; 
+    const channel = pusher.subscribe(`private-user-${userId}`);
+>>>>>>> parent of 9b0ec3e (Fix subdomain)
 
     // Forzar reconexión al recuperar el foco de la pestaña (vital para dispositivos móviles)
     document.addEventListener('visibilitychange', () => {
@@ -386,6 +401,7 @@
         }
     }
 
+<<<<<<< HEAD
     async function cancelarPedido() {
         try {
             await fetch(`${SERVER_URL}/api/cancelar-pedido`, {
@@ -422,9 +438,24 @@
         
         console.log("Pedido cancelado y formulario reseteado.");
     }
+=======
+    // Reemplazamos los listeners de Socket.io por binds de Pusher
+    channel.bind('confirmacion-cliente', (data) => {
+        document.getElementById('driver-info').innerHTML = 
+            `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
+    });
+
+    channel.bind('recibir-pago', (data) => {
+        document.getElementById('payment-area').innerHTML = `
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <p>Paga tu viaje de forma segura:</p>
+            <a href="${data.link}" target="_blank">PAGAR $${data.monto}</a>
+        `;
+    });
+>>>>>>> parent of 9b0ec3e (Fix subdomain)
 </script>
 
-<!-- Google Maps se carga dinámicamente vía core.js con la API Key del bootstrap -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmTzHBhtQ4E8BG6DL0xdrEOYdZmQEBXkI&libraries=places&callback=initMaps"></script>
 
 </body>
 </html>

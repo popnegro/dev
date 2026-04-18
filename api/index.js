@@ -109,11 +109,7 @@ app.get('/api/bootstrap', (req, res) => {
     };
 
     const config = tenants[brand] || tenants['mendoza'];
-    res.json({
-        ...config,
-        pusher_key: process.env.PUSHER_KEY,
-        pusher_cluster: process.env.PUSHER_CLUSTER
-    });
+    res.json(config);
 });
 
 // 5. Endpoint para Mercado Pago
@@ -188,6 +184,7 @@ app.post('/api/enviar-link-pago', async (req, res) => {
     res.json({ status: "Link de pago enviado a canal privado", channel: channelName });
 });
 
+<<<<<<< HEAD
 // 7. Servir la Landing Page principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/index.html'));
@@ -198,6 +195,8 @@ app.get('/status', (req, res) => {
     res.json({ status: "ok", message: "TaxiGo API is running!" });
 });
 
+=======
+>>>>>>> parent of 9b0ec3e (Fix subdomain)
 // 7. Encender servidor
 const PORT = process.env.PORT || 3000;
 
