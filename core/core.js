@@ -1,7 +1,7 @@
 /**
- * TAXIGO CORE - Motor de Identidad Dinámica
+ * TAXICHAT CORE - Motor de Identidad Dinámica
  */
-const TaxiGo = {
+const TaxiChat = {
     config: null,
     map: null,
 
@@ -85,4 +85,4 @@ const TaxiGo = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => TaxiGo.init());
+document.addEventListener('DOMContentLoaded', () => TaxiChat.init());

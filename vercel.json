@@ -1,6 +1,9 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.js" }
+    {
+      "source": "/(api/.*|create-preference|pusher/auth|status)",
+      "destination": "/api/index.js"
+    }
   ]
 }

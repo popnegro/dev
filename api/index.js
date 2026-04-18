@@ -1,9 +1,31 @@
 require('dotenv').config();
+
+// Validación de variables de entorno requeridas
+const requiredEnvVars = [
+    'MP_ACCESS_TOKEN',
+    'PUSHER_APP_ID',
+    'PUSHER_KEY',
+    'PUSHER_SECRET',
+    'PUSHER_CLUSTER',
+    'GOOGLE_MAPS_API_KEY'
+];
+
+const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingVars.length > 0) {
+    console.error('❌ ERROR: Faltan variables de entorno críticas en el archivo .env:');
+    missingVars.forEach(v => console.error(`   - ${v}`));
+    console.error('\nEl servidor no puede iniciar sin estas configuraciones.');
+    process.exit(1); // Detener el proceso con error
+}
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 const Pusher = require("pusher");
+
+console.log('✅ Configuración de entorno validada correctamente.');
 
 const app = express();
 
@@ -48,8 +70,8 @@ app.get('/api/bootstrap', (req, res) => {
     
     // Mapeo dinámico usando variables de entorno
     const tenants = {
-        'taxigo': {
-            name: 'TaxiGo Central',
+        'taxichat': {
+            name: 'TaxiChat Central',
             theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         },
@@ -59,7 +81,7 @@ app.get('/api/bootstrap', (req, res) => {
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         },
         'taxichat-nine': {
-            name: 'TaxiGo Demo',
+            name: 'TaxiChat Demo',
             theme: { primary: '#10b981', secondary: '#064e3b', radius: '0.5rem' },
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         }
@@ -135,14 +157,16 @@ app.post('/api/enviar-link-pago', async (req, res) => {
 
 // 7. Endpoint para verificar el estado del servidor
 app.get('/status', (req, res) => {
-    res.json({ status: "ok", message: "TaxiGo API is running!" });
+    res.json({ status: "ok", message: "TaxiChat API is running!" });
 });
 
 // 7. Encender servidor
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`✅ Servidor local corriendo en el puerto ${PORT}`);
+    });
+}
 
 module.exports = app;
