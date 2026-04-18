@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Fallido | TaxiChat</title>
+    <style>
+        :root {
+            --primary: var(--color-primary, #e74c3c);
+            --radius: var(--brand-radius, 15px);
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+        .icon { font-size: 60px; color: #e74c3c; margin-bottom: 20px; }
+        h1 { margin: 0 0 10px; color: #333; }
+        p { color: #666; margin-bottom: 30px; }
+        .btn { display: inline-block; padding: 12px 30px; background: var(--primary); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; transition: opacity 0.3s; }
+        .btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">❌</div>
+        <h1>Pago No Procesado</h1>
+        <p>Hubo un problema al procesar tu pago con <span class="brand-name">nuestra empresa</span>. Por favor, intenta nuevamente o utiliza otro medio de pago.</p>
+        <a href="/" class="btn">Reintentar</a>
+    </div>
+    <!-- core.js se encarga de inyectar el nombre de la marca y los colores -->
+    <script src="/core/core.js"></script>
+</body>
+</html>

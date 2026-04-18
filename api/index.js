@@ -1,4 +1,11 @@
-require('dotenv').config();
+const path = require('path');
+// Resolve the absolute path to the .env file in the parent directory
+const envPath = path.resolve(__dirname, '../.env');
+const envResult = require('dotenv').config({ path: envPath });
+
+if (envResult.error) {
+    console.warn(`⚠️ Warning: Could not find .env file at ${envPath}`);
+}
 
 // --- BLOQUE DE VALIDACIÓN DE ENTORNO ---
 const requiredEnvVars = [
@@ -18,11 +25,12 @@ if (missingVars.length > 0) {
     console.error('\nVerifica que el archivo .env esté en la raíz de /api/ y tenga los valores correctos.');
     process.exit(1); 
 }
+
+console.log(`✅ Environment variables loaded successfully from: ${envPath}`);
 // ---------------------------------------
 
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
 const cors = require('cors');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 const Pusher = require("pusher");
@@ -91,8 +99,8 @@ app.get('/api/bootstrap', (req, res) => {
     
     // Mapeo dinámico usando variables de entorno
     const tenants = {
-        'taxigo': {
-            name: 'TaxiGo Central',
+        'taxichat': {
+            name: 'TaxiChat Central',
             theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         },
@@ -102,14 +110,18 @@ app.get('/api/bootstrap', (req, res) => {
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         },
         'taxichat-nine': {
-            name: 'TaxiGo Demo',
+            name: 'TaxiChat Demo',
             theme: { primary: '#10b981', secondary: '#064e3b', radius: '0.5rem' },
             maps_key: process.env.GOOGLE_MAPS_API_KEY
         }
     };
 
     const config = tenants[brand] || tenants['mendoza'];
-    res.json(config);
+    res.json({
+        ...config,
+        pusher_key: process.env.PUSHER_KEY,
+        pusher_cluster: process.env.PUSHER_CLUSTER
+    });
 });
 
 // 5. Endpoint para Mercado Pago
@@ -128,8 +140,8 @@ app.post('/create-preference', async (req, res) => {
                     currency_id: 'ARS' 
                 }],
                 back_urls: {
-                    success: `${baseUrl}/success.html`,
-                    failure: `${baseUrl}/failure.html`,
+                    success: `${baseUrl}/views/success.html`,
+                    failure: `${baseUrl}/views/failure.html`,
                 },
                 auto_return: "approved",
             }
@@ -184,7 +196,6 @@ app.post('/api/enviar-link-pago', async (req, res) => {
     res.json({ status: "Link de pago enviado a canal privado", channel: channelName });
 });
 
-<<<<<<< HEAD
 // 7. Servir la Landing Page principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/index.html'));
@@ -192,17 +203,24 @@ app.get('/', (req, res) => {
 
 // 7. Endpoint para verificar el estado del servidor
 app.get('/status', (req, res) => {
-    res.json({ status: "ok", message: "TaxiGo API is running!" });
+    res.json({ status: "ok", message: "TaxiChat API is running!" });
 });
 
-=======
->>>>>>> parent of 9b0ec3e (Fix subdomain)
 // 7. Encender servidor
 const PORT = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`✅ Servidor local corriendo en el puerto ${PORT}`);
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`❌ Port ${PORT} is already in use. Try changing the PORT in your .env or killing the existing process.`);
+            process.exit(1);
+        } else {
+            console.error('❌ Server error:', err);
+        }
     });
 }
 

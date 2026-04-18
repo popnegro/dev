@@ -12,11 +12,7 @@
         }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         .widget { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; font-size: 1.4em; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; color: var(--primary); font-weight: 700; }
-        
-        .step { display: none; opacity: 0; }
-        .step.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        .step-exit { display: block !important; animation: fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        h2 { margin-top: 0; font-size: 1.5em; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; color: var(--primary); font-weight: 700; }
 
         input { width: 100%; padding: 14px; margin: 12px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; transition: all 0.3s ease; }
         input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px rgba(0, 158, 227, 0.1); }
@@ -31,10 +27,6 @@
         .status-panel { margin-top: 20px; padding: 18px; background: #f8fbff; border: 1px solid #e1efff; border-left: 5px solid var(--accent); display: none; border-radius: 12px; animation: fadeIn 0.5s; }
         #payment-area a { display: block; background: var(--accent); color: white; text-align: center; padding: 12px; text-decoration: none; border-radius: 8px; margin-top: 15px; font-weight: bold; }
 
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); margin-top: 5px; }
-        .summary-trip { font-size: 0.9em; color: #555; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .summary-trip b { color: var(--primary); }
-        
         #estimate-box { 
             margin: 15px 0; 
             padding: 20px; 
@@ -70,30 +62,16 @@
 <body>
 
 <div class="widget">
-    <div id="step-1" class="step active">
-        <h2>Paso 1: ¿A dónde vamos?</h2>
-        <input type="text" id="userName" placeholder="Tu Nombre Completo">
-        <input type="text" id="origin" placeholder="📍 ¿Desde dónde sales?">
-        <input type="text" id="destination" placeholder="🏁 ¿A dónde vamos?">
-        
-        <button onclick="validarPaso1()">VER PRECIO Y TIEMPO</button>
-    </div>
+    <h2 class="brand-name">Cargando...</h2>
+    <input type="text" id="userName" placeholder="Tu Nombre Completo">
+    <input type="text" id="origin" placeholder="📍 ¿Desde dónde sales?">
+    <input type="text" id="destination" placeholder="🏁 ¿A dónde vamos?">
 
-    <div id="step-2" class="step">
-        <h2>Paso 2: Confirmar Viaje</h2>
-        
-        <div class="summary-trip" id="trip-summary">
-            <!-- Se llena dinámicamente -->
-        </div>
+    <div id="estimate-box"></div>
 
-        <div id="estimate-box"></div>
-        
-        <button id="btnRequest" onclick="solicitarTaxi()" disabled>
-            <span id="btnText">CONFIRMAR Y PEDIR TAXI</span>
-        </button>
-
-        <button id="btnBack" class="btn-outline" onclick="cambiarPaso(1)">VOLVER A EDITAR</button>
-    </div>
+    <button id="btnRequest" onclick="solicitarTaxi()">
+        <span id="btnText">SOLICITAR TAXI</span>
+    </button>
 
     <div id="status-panel" class="status-panel">
         <strong>Estado de tu viaje:</strong>
@@ -104,9 +82,9 @@
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
-<<<<<<< HEAD
     const SERVER_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
         ? `${window.location.protocol}//${window.location.host}`
         : 'https://dev-eta-seven.vercel.app';
@@ -125,7 +103,7 @@
         };
     }
 
-    // Esperar a que TaxiGo Core cargue la configuración dinámica
+    // Esperar a que TaxiChat Core cargue la configuración dinámica
     document.addEventListener('taxichat-ready', (e) => {
         const config = e.detail;
         console.log("📦 Configuración recibida en Widget:", config);
@@ -170,35 +148,12 @@
             `;
         });
     });
-=======
-    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000'
-        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
-
-    // Inicializar Pusher con soporte para autenticación de canales privados
-    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
-        cluster: 'TU_CLUSTER_REAL_AQUI',
-        authEndpoint: `${SERVER_URL}/pusher/auth`
-    });
-
-    // Suscribirse al canal privado del usuario (ID estático para pruebas)
-    const userId = "123"; 
-    const channel = pusher.subscribe(`private-user-${userId}`);
->>>>>>> parent of 9b0ec3e (Fix subdomain)
-
-    // Forzar reconexión al recuperar el foco de la pestaña (vital para dispositivos móviles)
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && pusher && pusher.connection.state !== 'connected') {
-            console.log("🔄 Pestaña activa: Verificando conexión en tiempo real...");
-            pusher.connect();
-        }
-    });
 
     let originAutocomplete, destAutocomplete;
     let selectedOrigin = null;
     let selectedDest = null;
 
-    // Ejecutar cuando el HTML esté cargado
+    // Persistencia del nombre para facilitar pruebas
     document.addEventListener('DOMContentLoaded', () => {
         const nameInput = document.getElementById('userName');
         if (nameInput) {
@@ -209,32 +164,7 @@
         }
     });
 
-    let isTransitioning = false;
-    function cambiarPaso(paso) {
-        if (isTransitioning) return;
-        const currentStep = document.querySelector('.step.active');
-        const nextStep = document.getElementById(`step-${paso}`);
-
-        if (currentStep && currentStep !== nextStep) {
-            isTransitioning = true;
-            currentStep.classList.add('step-exit');
-            currentStep.addEventListener('animationend', () => {
-                currentStep.classList.remove('active', 'step-exit');
-                nextStep.classList.add('active');
-                isTransitioning = false;
-            }, { once: true });
-        } else if (!currentStep) {
-            nextStep.classList.add('active');
-        }
-    }
-
-    function validarPaso1() {
-        const user = document.getElementById('userName').value;
-        if (!user) return alert("Por favor, ingresa tu nombre");
-        if (!selectedOrigin || !selectedOrigin.geometry || !selectedDest || !selectedDest.geometry) return alert("Selecciona origen y destino válidos");
-        cambiarPaso(2);
-    }
-
+    // La función initMaps es llamada por core.js al cargar Google Maps
     function initMaps() {
         const destInput = document.getElementById('destination');
         const originInput = document.getElementById('origin');
@@ -334,11 +264,6 @@
                 const destParam = getLatLng(selectedDest) || encodeURIComponent(document.getElementById('destination').value);
                 const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originParam}&destination=${destParam}&travelmode=driving`;
 
-                document.getElementById('trip-summary').innerHTML = `
-                    <div>De: <b>${document.getElementById('origin').value}</b></div>
-                    <div>A: <b>${document.getElementById('destination').value}</b></div>
-                `;
-
                 estimateBox.style.display = 'block';
                 estimateBox.innerHTML = `
                     <span class="eta-badge">⏱ LLEGA EN ${durationText.toUpperCase()}</span>
@@ -353,7 +278,10 @@
                     </div>
                 `;
 
-                if (btnRequest) btnRequest.disabled = false;
+                if (btnRequest) {
+                    btnRequest.disabled = false;
+                    btnRequest.innerHTML = `<span id="btnText">SOLICITAR TAXI</span>`;
+                }
             } else {
                 estimateBox.innerHTML = "No se pudo calcular la distancia.";
                 if (btnRequest) btnRequest.disabled = true;
@@ -368,20 +296,13 @@
         const user = document.getElementById('userName').value;
         const dest = document.getElementById('destination').value;
         
-        if (!user) return alert("Por favor, ingresa tu nombre");
-        
-        if (!selectedOrigin || !selectedOrigin.geometry) {
-            return alert("Por favor, selecciona un punto de origen válido de las sugerencias de Google Maps.");
-        }
-
-        if (!selectedDest || !selectedDest.geometry) {
-            return alert("Por favor, selecciona un destino válido de las sugerencias de Google Maps.");
+        if (!user || !selectedOrigin?.geometry || !selectedDest?.geometry) {
+            return alert("Por favor, completa nombre, origen y destino válidos.");
         }
 
         document.getElementById('status-panel').style.display = 'block';
         document.getElementById('btnRequest').disabled = true;
         document.getElementById('btnRequest').innerHTML = `<div class="spinner"></div> BUSCANDO CHOFER...`;
-        if(document.getElementById('btnBack')) document.getElementById('btnBack').style.display = 'none';
         
         try {
             await fetch(`${SERVER_URL}/api/nuevo-pedido`, {
@@ -401,7 +322,6 @@
         }
     }
 
-<<<<<<< HEAD
     async function cancelarPedido() {
         try {
             await fetch(`${SERVER_URL}/api/cancelar-pedido`, {
@@ -415,12 +335,10 @@
         }
 
         // 1. Ocultar el panel de estado y resetear el botón de solicitud
-        cambiarPaso(1);
         document.getElementById('status-panel').style.display = 'none';
         const btnRequest = document.getElementById('btnRequest');
-        btnRequest.disabled = true;
-        btnRequest.innerHTML = `<span id="btnText">CONFIRMAR Y PEDIR TAXI</span>`;
-        if(document.getElementById('btnBack')) document.getElementById('btnBack').style.display = 'block';
+        btnRequest.disabled = false;
+        btnRequest.innerHTML = `<span id="btnText">SOLICITAR TAXI</span>`;
 
         // 2. Limpiar los campos de entrada de ubicación
         document.getElementById('origin').value = '';
@@ -438,24 +356,7 @@
         
         console.log("Pedido cancelado y formulario reseteado.");
     }
-=======
-    // Reemplazamos los listeners de Socket.io por binds de Pusher
-    channel.bind('confirmacion-cliente', (data) => {
-        document.getElementById('driver-info').innerHTML = 
-            `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
-    });
-
-    channel.bind('recibir-pago', (data) => {
-        document.getElementById('payment-area').innerHTML = `
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p>Paga tu viaje de forma segura:</p>
-            <a href="${data.link}" target="_blank">PAGAR $${data.monto}</a>
-        `;
-    });
->>>>>>> parent of 9b0ec3e (Fix subdomain)
 </script>
-
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmTzHBhtQ4E8BG6DL0xdrEOYdZmQEBXkI&libraries=places&callback=initMaps"></script>
 
 </body>
 </html>

@@ -1,14 +1,16 @@
 /**
- * TAXIGO CORE - Motor de Identidad Dinámica
+ * TAXICHAT CORE - Motor de Identidad Dinámica
  */
-const TaxiGo = {
+const TaxiChat = {
     config: null,
     map: null,
 
     async init() {
         const hostname = window.location.hostname;
         // Detectar ID de marca desde el subdominio
-        const brandID = hostname.split('.')[0];
+        const brandID = hostname.includes('localhost') ? 'taxichat' : hostname.split('.')[0];
+        
+        console.log(`🔍 Intentando cargar marca: ${brandID} desde ${hostname}`);
 
         try {
             const response = await fetch(`/api/bootstrap?brand=${brandID}`);
@@ -19,7 +21,10 @@ const TaxiGo = {
             this.applyUI();
             this.loadGoogleMaps();
             
-            console.log(`🚀 Empresa cargada: ${this.config.name}`);
+            console.log(`🚀 Empresa cargada: ${this.config.name}. Disparando taxichat-ready...`);
+            // Notificar a otros scripts que la configuración está lista
+            document.dispatchEvent(new CustomEvent('taxichat-ready', { detail: this.config }));
+
             return this.config;
         } catch (error) {
             console.error("❌ Error Core:", error);
@@ -59,6 +64,11 @@ const TaxiGo = {
     },
 
     initMap() {
+        // Si existe la función global initMaps (usada en widget.html), la llamamos
+        if (typeof window.initMaps === 'function') {
+            window.initMaps();
+        }
+
         const mapContainer = document.getElementById('map');
         if (!mapContainer) return;
 
@@ -76,4 +86,4 @@ const TaxiGo = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => TaxiGo.init());
+document.addEventListener('DOMContentLoaded', () => TaxiChat.init());

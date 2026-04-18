@@ -13,6 +13,10 @@
         .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; }
         .btn-assign { background: #2ecc71; }
         .btn-pay { background: #009ee3; }
+        .btn:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+        }
         .status-badge { display: inline-block; padding: 5px 10px; background: #fff3cd; color: #856404; border-radius: 20px; font-size: 0.8em; margin-bottom: 10px; }
         .order-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
         .order-item:hover { background: #f0f7ff; }
@@ -36,17 +40,17 @@
     <h1>Panel de Control</h1>
     
     <div class="card">
-        <div class="status-badge">Pedido Pendiente #001</div>
+        <div class="status-badge">Ningún pedido seleccionado</div>
         <h3>Gestión de Viaje</h3>
         <p>Asigna un chofer y genera el link de pago para el cliente.</p>
         
         <div class="control-group">
             <input type="text" id="driverName" placeholder="Nombre del Chofer">
             <input type="number" id="eta" placeholder="Minutos de llegada">
-            <button class="btn btn-assign" onclick="asignar()">ASIGNAR CHOFER</button>
+            <button class="btn btn-assign" id="btnAssign" onclick="asignar()" disabled>ASIGNAR CHOFER</button>
             
             <input type="number" id="amount" placeholder="Monto total ($)">
-            <button class="btn btn-pay" onclick="generarLink()">GENERAR LINK PAGO</button>
+            <button class="btn btn-pay" id="btnPay" onclick="generarLink()" disabled>GENERAR LINK PAGO</button>
         </div>
     </div>
 </div>
@@ -54,16 +58,15 @@
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
-<<<<<<< HEAD
     const SERVER_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
         ? `${window.location.protocol}//${window.location.host}`
         : 'https://dev-eta-seven.vercel.app';
 
-    let userId = "123"; // ID por defecto
+    let userId = null; 
     let pusher;
     let adminChannel;
 
-    // Esperar a que TaxiGo Core cargue la configuración dinámica
+    // Esperar a que TaxiChat Core cargue la configuración dinámica
     document.addEventListener('taxichat-ready', (e) => {
         const config = e.detail;
 
@@ -107,49 +110,38 @@
 
             if (userId === data.userId) {
                 document.querySelector('.status-badge').innerText = `Pedido Cancelado por el Usuario`;
+                userId = null;
+                document.getElementById('btnAssign').disabled = true;
+                document.getElementById('btnPay').disabled = true;
             }
         });
-=======
-    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000'
-        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
-
-    let userId = "123"; // ID por defecto
-
-    // Configurar Pusher para el Operador
-    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
-        cluster: 'TU_CLUSTER_REAL_AQUI',
-        authEndpoint: `${SERVER_URL}/pusher/auth`
     });
 
-    const adminChannel = pusher.subscribe('private-admin');
+    function validarBotonPago() {
+        const monto = parseFloat(document.getElementById('amount').value);
+        const btnPay = document.getElementById('btnPay');
+        // El botón se habilita solo si hay un usuario seleccionado y el monto es mayor a 0
+        btnPay.disabled = !userId || isNaN(monto) || monto <= 0;
+    }
 
-    // Escuchar nuevos pedidos
-    adminChannel.bind('nuevo-pedido', (data) => {
-        const list = document.getElementById('orders-list');
-        const emptyMsg = list.querySelector('.empty-msg');
-        if(emptyMsg) emptyMsg.remove();
+    // Escuchar cambios en el campo de monto para validar el botón
+    document.getElementById('amount').addEventListener('input', validarBotonPago);
 
-        const orderDiv = document.createElement('div');
-        orderDiv.className = 'order-item';
-        orderDiv.onclick = () => selectOrder(data.userId, data.id, data.nombre);
-        orderDiv.innerHTML = `
-            <strong>#${data.id} - ${data.nombre}</strong><br>
-            <small>${data.destino.substring(0, 25)}...</small>
-        `;
-        list.prepend(orderDiv);
->>>>>>> parent of 9b0ec3e (Fix subdomain)
-    });
-
-    function selectOrder(id, ticket, name) {
+    function selectOrder(e, id, ticket, name) {
         userId = id;
         document.querySelector('.status-badge').innerText = `Pedido Pendiente #${ticket} - ${name}`;
         document.querySelectorAll('.order-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
+        e.currentTarget.classList.add('active');
+        
+        // Habilitar asignación y validar estado del botón de pago
+        document.getElementById('btnAssign').disabled = false;
+        validarBotonPago();
     }
 
     // 1. Asignar Chofer
     async function asignar() {
+        if (!userId) return alert("Selecciona un pedido primero");
+        
         const chofer = document.getElementById('driverName').value;
         const tiempo = document.getElementById('eta').value;
 
@@ -169,6 +161,8 @@
 
     // 2. Generar Link de Mercado Pago vía Servidor
     async function generarLink() {
+        if (!userId) return alert("Selecciona un pedido primero");
+
         const monto = document.getElementById('amount').value;
         if(!monto) return alert("Ingresa un monto válido");
 
