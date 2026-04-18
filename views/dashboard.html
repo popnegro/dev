@@ -82,12 +82,32 @@
 
             const orderDiv = document.createElement('div');
             orderDiv.className = 'order-item';
+            orderDiv.setAttribute('data-user-id', data.userId);
             orderDiv.onclick = (e) => selectOrder(e, data.userId, data.id, data.nombre);
             orderDiv.innerHTML = `
                 <strong>#${data.id} - ${data.nombre}</strong><br>
                 <small>${data.destino.substring(0, 25)}...</small>
             `;
             list.prepend(orderDiv);
+        });
+
+        // Escuchar cancelaciones
+        adminChannel.bind('pedido-cancelado', (data) => {
+            const list = document.getElementById('orders-list');
+            const orderItems = list.querySelectorAll('.order-item');
+            orderItems.forEach(item => {
+                if (item.getAttribute('data-user-id') === data.userId) {
+                    item.remove();
+                }
+            });
+
+            if (list.children.length === 0) {
+                list.innerHTML = '<p class="empty-msg">No hay pedidos nuevos...</p>';
+            }
+
+            if (userId === data.userId) {
+                document.querySelector('.status-badge').innerText = `Pedido Cancelado por el Usuario`;
+            }
         });
     });
 

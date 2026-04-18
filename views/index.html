@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxiChat | Tu transporte de confianza</title>
+    <style>
+        :root {
+            --primary: #000000;
+            --accent: #009ee3;
+            --text: #333;
+            --light: #f4f7f6;
+        }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+        body { font-family: 'Inter', sans-serif; margin: 0; color: var(--text); line-height: 1.6; }
+
+        /* Sticky Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .navbar .logo { 
+            font-weight: bold; 
+            font-size: 1.5em; 
+            color: var(--accent); 
+            text-decoration: none; 
+        }
+        .nav-links { list-style: none; display: flex; margin: 0; padding: 0; }
+        .nav-links li { margin-left: 20px; }
+        .nav-links a { color: white; text-decoration: none; font-weight: 500; transition: color 0.3s; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-links a:hover { color: var(--accent); }
+        
+        /* Breadcrumb */
+        .breadcrumb { padding: 20px 5%; background: var(--light); font-size: 0.9em; color: #666; }
+        .breadcrumb a { color: var(--accent); text-decoration: none; }
+
+        /* Hero Section */
+        .hero { 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 5%;
+            text-align: center;
+        }
+        .hero h1 { font-size: 3em; margin: 0; }
+        .hero p { font-size: 1.2em; opacity: 0.9; }
+
+        /* Widget Section */
+        .booking-container { 
+            display: flex; 
+            justify-content: center; 
+            padding: 50px 5%; 
+            background: white; 
+            margin-top: -50px;
+        }
+        .widget-wrapper {
+            width: 100%;
+            max-width: 450px;
+            height: 650px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            background: white;
+        }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* General Sections */
+        section { padding: 80px 10%; }
+        h2 { text-align: center; font-size: 2em; margin-bottom: 40px; position: relative; }
+        h2::after { content: ''; display: block; width: 50px; height: 4px; background: var(--accent); margin: 10px auto; }
+
+        /* Nosotros */
+        .about { background: var(--light); display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+        .about img { width: 100%; border-radius: 15px; }
+
+        /* Flota */
+        .fleet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .car-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; }
+        .car-card img { width: 100%; height: 150px; object-fit: contain; }
+        .car-card h3 { margin: 15px 0 5px; }
+
+        /* FAQ */
+        .faq-container { max-width: 800px; margin: 0 auto; }
+        details { background: white; margin-bottom: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; }
+        details summary { font-weight: bold; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+        details summary::after { content: '+'; color: var(--accent); font-size: 1.5em; }
+        details[open] summary::after { content: '-'; }
+
+        footer { background: var(--primary); color: white; text-align: center; padding: 40px; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 10px 5%; }
+            .navbar .logo { font-size: 1.2em; }
+            .nav-links li { margin-left: 10px; }
+            .nav-links a { font-size: 0.75em; }
+            .about { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="#" class="logo">TaxiChat</a>
+        <ul class="nav-links">
+            <li><a href="#about">Nosotros</a></li>
+            <li><a href="#fleet">Flota</a></li>
+            <li><a href="#faq">FAQ</a></li>
+        </ul>
+    </nav>
+
+    <nav class="breadcrumb">
+        <a href="#">Inicio</a> &gt; <a href="#">Servicios</a> &gt; <span>Reserva Online</span>
+    </nav>
+
+    <header class="hero">
+        <h1>Viaja con TaxiChat</h1>
+        <p>Seguridad, rapidez y confort en cada trayecto.</p>
+    </header>
+
+    <div class="booking-container">
+        <div class="widget-wrapper">
+            <!-- El iframe apunta al widget existente -->
+            <iframe src="/views/widget.html" title="Reserva de Taxi"></iframe>
+        </div>
+    </div>
+
+    <section id="about" class="about">
+        <div>
+            <h2>Sobre Nosotros</h2>
+            <p>En <strong>TaxiChat</strong>, no solo te llevamos de un punto A a un punto B. Nos enfocamos en brindar una experiencia de transporte moderna, integrando tecnología de punta para tu seguridad.</p>
+            <p>Con más de 10 años en el mercado, nuestra red de choferes certificados garantiza puntualidad y un trato excepcional en cada viaje.</p>
+        </div>
+        <img src="https://images.unsplash.com/photo-1494905998402-395d579af36f?auto=format&fit=crop&q=80&w=800" alt="TaxiChat Team">
+    </section>
+
+    <section id="fleet">
+        <h2>Nuestra Flota</h2>
+        <div class="fleet-grid">
+            <div class="car-card">
+                <img src="https://www.pngall.com/wp-content/uploads/2/Toyota-Corolla-PNG-High-Quality-Image.png" alt="Sedan">
+                <h3>Estándar</h3>
+                <p>Ideal para viajes diarios. Confortable y económico.</p>
+            </div>
+            <div class="car-card">
+                <img src="https://www.pngall.com/wp-content/uploads/5/Mercedes-Benz-PNG-Clipart.png" alt="Premium">
+                <h3>Premium</h3>
+                <p>Para quienes buscan elegancia y un viaje superior.</p>
+            </div>
+            <div class="car-card">
+                <img src="https://www.pngall.com/wp-content/uploads/2/Travel-Van-PNG-Image.png" alt="Van">
+                <h3>Van Grupal</h3>
+                <p>Perfecto para familias o grupos de hasta 7 personas.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq">
+        <h2>Preguntas Frecuentes</h2>
+        <div class="faq-container">
+            <details>
+                <summary>¿Cómo puedo pagar mi viaje?</summary>
+                <p>Aceptamos efectivo y pagos digitales a través de Mercado Pago una vez que el chofer asigna la tarifa.</p>
+            </details>
+            <details>
+                <summary>¿Los choferes son seguros?</summary>
+                <p>Todos nuestros conductores pasan por un riguroso proceso de validación de antecedentes y capacitación en servicio al cliente.</p>
+            </details>
+            <details>
+                <summary>¿Puedo programar un viaje?</summary>
+                <p>Por el momento operamos bajo demanda inmediata para asegurar que siempre haya un móvil cerca de ti.</p>
+            </details>
+            <details>
+                <summary>¿Qué hago si olvido algo en el taxi?</summary>
+                <p>Puedes contactarnos a través de nuestra central indicando tu nombre y el número de pedido que figura en tu pantalla.</p>
+            </details>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 TaxiChat Central. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

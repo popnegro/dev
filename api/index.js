@@ -20,6 +20,7 @@ if (missingVars.length > 0) {
 }
 
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
@@ -29,9 +30,29 @@ console.log('✅ Configuración de entorno validada correctamente.');
 
 const app = express();
 
+// Función auxiliar para registro de actividades (Logging)
+const writeLog = (event, data) => {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        event,
+        data
+    };
+    const logString = JSON.stringify(logEntry);
+    console.log(`[ACTIVITY]: ${logString}`);
+    
+    // Intentar escribir en archivo local (Nota: En Vercel el FS es de solo lectura)
+    try {
+        fs.appendFileSync(path.join(__dirname, 'activity.log'), logString + '\n');
+    } catch (err) { /* Ignorar errores en entornos serverless sin FS persistente */ }
+};
+
 // 1. Configuración de Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // Requerido para procesar la autenticación de Pusher
+app.use((req, res, next) => {
+    writeLog('HTTP_REQUEST', { method: req.method, url: req.url, ip: req.ip });
+    next();
+});
 app.use(cors());
 
 // 1.1 Servir archivos estáticos (HTML, CSS, JS)
@@ -57,6 +78,7 @@ const pusher = new Pusher({
 app.post('/pusher/auth', (req, res) => {
     const socketId = req.body.socket_id;
     const channel = req.body.channel_name;
+    writeLog('PUSHER_AUTH', { channel, socketId });
 
     // Aquí deberías verificar la identidad del usuario (usando JWT, sesiones, etc.)
     // Por ahora, autorizamos la conexión basándonos en el socket_id proporcionado.
@@ -118,6 +140,8 @@ app.post('/create-preference', async (req, res) => {
             }
         });
 
+        writeLog('MP_PREFERENCE_CREATED', { id: result.id, title: req.body.title, price: req.body.price });
+
         // En Sandbox, Mercado Pago devuelve sandbox_init_point. 
         // Es preferible usarlo para evitar redirecciones fallidas a la App móvil en pruebas.
         res.json({ 
@@ -136,14 +160,23 @@ app.post('/api/nuevo-pedido', async (req, res) => {
         id: Date.now().toString().slice(-4),
         timestamp: new Date().toLocaleTimeString()
     };
+    writeLog('PEDIDO_NUEVO', pedido);
     await pusher.trigger("private-admin", "nuevo-pedido", pedido);
     res.json({ status: "Pedido recibido", pedido });
+});
+
+app.post('/api/cancelar-pedido', async (req, res) => {
+    const { userId } = req.body;
+    writeLog('PEDIDO_CANCELADO', { userId });
+    await pusher.trigger("private-admin", "pedido-cancelado", { userId });
+    res.json({ status: "Cancelación notificada", userId });
 });
 
 app.post('/api/asignar-taxi', async (req, res) => {
     const { userId, ...data } = req.body;
     // Emitimos a un canal privado único para ese usuario
     const channelName = `private-user-${userId}`;
+    writeLog('TAXI_ASIGNADO', { userId, ...data });
     await pusher.trigger(channelName, "confirmacion-cliente", data);
     res.json({ status: "Evento enviado a canal privado", channel: channelName });
 });
@@ -151,8 +184,14 @@ app.post('/api/asignar-taxi', async (req, res) => {
 app.post('/api/enviar-link-pago', async (req, res) => {
     const { userId, ...data } = req.body;
     const channelName = `private-user-${userId}`;
+    writeLog('LINK_PAGO_ENVIADO', { userId, ...data });
     await pusher.trigger(channelName, "recibir-pago", data);
     res.json({ status: "Link de pago enviado a canal privado", channel: channelName });
+});
+
+// 7. Servir la Landing Page principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/index.html'));
 });
 
 // 7. Endpoint para verificar el estado del servidor
