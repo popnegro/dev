@@ -37,21 +37,43 @@
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
-    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000'
-        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
+    const SERVER_URL = window.location.hostname.endsWith('localhost') || window.location.hostname === '127.0.0.1'
+        ? `${window.location.protocol}//${window.location.host}`
+        : 'https://dev-eta-seven.vercel.app'; // Sin barra al final
 
-    // Inicializar Pusher con soporte para autenticación de canales privados
-    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
-        cluster: 'TU_CLUSTER_REAL_AQUI',
-        authEndpoint: `${SERVER_URL}/pusher/auth`
-    });
-
-    // Suscribirse al canal privado del usuario (ID estático para pruebas)
+    let pusher;
+    let channel;
     const userId = "123"; 
-    const channel = pusher.subscribe(`private-user-${userId}`);
+
+    // Esperar a que TaxiGo Core cargue la configuración dinámica
+    document.addEventListener('taxichat-ready', (e) => {
+        const config = e.detail;
+        console.log("📦 Configuración recibida en Widget:", config);
+
+        pusher = new Pusher(config.pusher_key, {
+            cluster: config.pusher_cluster,
+            authEndpoint: `${SERVER_URL}/pusher/auth`
+        });
+
+        channel = pusher.subscribe(`private-user-${userId}`);
+
+        // Vincular eventos de Pusher
+        channel.bind('confirmacion-cliente', (data) => {
+            document.getElementById('driver-info').innerHTML = 
+                `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
+        });
+
+        channel.bind('recibir-pago', (data) => {
+            document.getElementById('payment-area').innerHTML = `
+                <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+                <p>Paga tu viaje de forma segura:</p>
+                <a href="${data.link}" target="_blank">PAGAR $${data.monto}</a>
+            `;
+        });
+    });
 
     let autocomplete;
 
@@ -123,23 +145,9 @@
             alert("Error de conexión con la central.");
         }
     }
-
-    // Reemplazamos los listeners de Socket.io por binds de Pusher
-    channel.bind('confirmacion-cliente', (data) => {
-        document.getElementById('driver-info').innerHTML = 
-            `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
-    });
-
-    channel.bind('recibir-pago', (data) => {
-        document.getElementById('payment-area').innerHTML = `
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p>Paga tu viaje de forma segura:</p>
-            <a href="${data.link}" target="_blank">PAGAR $${data.monto}</a>
-        `;
-    });
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmTzHBhtQ4E8BG6DL0xdrEOYdZmQEBXkI&libraries=places&callback=initMaps"></script>
+<!-- Google Maps se carga dinámicamente vía core.js con la API Key del bootstrap -->
 
 </body>
 </html>

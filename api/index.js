@@ -61,7 +61,11 @@ app.get('/api/bootstrap', (req, res) => {
     };
 
     const config = tenants[brand] || tenants['mendoza'];
-    res.json(config);
+    res.json({
+        ...config,
+        pusher_key: process.env.PUSHER_KEY,
+        pusher_cluster: process.env.PUSHER_CLUSTER
+    });
 });
 
 // 5. Endpoint para Mercado Pago
@@ -117,6 +121,11 @@ app.post('/api/enviar-link-pago', async (req, res) => {
     const channelName = `private-user-${userId}`;
     await pusher.trigger(channelName, "recibir-pago", data);
     res.json({ status: "Link de pago enviado a canal privado", channel: channelName });
+});
+
+// 7. Endpoint para verificar el estado del servidor
+app.get('/status', (req, res) => {
+    res.json({ status: "ok", message: "TaxiGo API is running!" });
 });
 
 // 7. Encender servidor
