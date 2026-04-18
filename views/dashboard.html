@@ -55,9 +55,9 @@
 <script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
-    const SERVER_URL = window.location.hostname.endsWith('localhost') || window.location.hostname === '127.0.0.1'
+    const SERVER_URL = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1'
         ? `${window.location.protocol}//${window.location.host}`
-        : 'https://dev-eta-seven.vercel.app'; // Sin barra al final
+        : 'https://dev-eta-seven.vercel.app';
 
     let userId = "123"; // ID por defecto
     let pusher;

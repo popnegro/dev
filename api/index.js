@@ -48,6 +48,11 @@ app.get('/api/bootstrap', (req, res) => {
     
     // Mapeo dinámico usando variables de entorno
     const tenants = {
+        'taxigo': {
+            name: 'TaxiGo Central',
+            theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
+            maps_key: process.env.GOOGLE_MAPS_API_KEY
+        },
         'mendoza': {
             name: 'Taxi Mendoza',
             theme: { primary: '#fbbf24', secondary: '#0f172a', radius: '1.5rem' },
@@ -72,7 +77,8 @@ app.get('/api/bootstrap', (req, res) => {
 app.post('/create-preference', async (req, res) => {
     try {
         const preference = new Preference(client);
-        const baseUrl = process.env.FRONTEND_URL || "https://taxichat-nine.vercel.app";
+        // Detectar dinámicamente el origen para que las Back URLs funcionen en localhost
+        const baseUrl = req.headers.origin || process.env.FRONTEND_URL || "https://taxichat-nine.vercel.app";
         
         const result = await preference.create({
             body: {
@@ -90,7 +96,11 @@ app.post('/create-preference', async (req, res) => {
             }
         });
 
-        res.json({ init_point: result.init_point });
+        // En Sandbox, Mercado Pago devuelve sandbox_init_point. 
+        // Es preferible usarlo para evitar redirecciones fallidas a la App móvil en pruebas.
+        res.json({ 
+            init_point: result.sandbox_init_point || result.init_point 
+        });
     } catch (error) {
         console.error("Error MP:", error);
         res.status(500).json({ error: "Error al crear preferencia" });
