@@ -36,14 +36,23 @@
     </div>
 </div>
 
-<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
     const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
         : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
 
-    const socket = io(SERVER_URL);
+    // Inicializar Pusher con soporte para autenticación de canales privados
+    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
+        cluster: 'TU_CLUSTER_REAL_AQUI',
+        authEndpoint: `${SERVER_URL}/pusher/auth`
+    });
+
+    // Suscribirse al canal privado del usuario (ID estático para pruebas)
+    const userId = "123"; 
+    const channel = pusher.subscribe(`private-user-${userId}`);
+
     let autocomplete;
 
     // Ejecutar cuando el HTML esté cargado
@@ -85,7 +94,7 @@
         }
     }
 
-    function solicitarTaxi() {
+    async function solicitarTaxi() {
         const user = document.getElementById('userName').value;
         const dest = document.getElementById('destination').value;
         
@@ -97,22 +106,31 @@
         document.getElementById('btnRequest').disabled = true;
         document.getElementById('btnRequest').innerText = "ESPERANDO CHOFER...";
         
-        // Enviar evento al servidor
-        socket.emit('nuevo-pedido', { 
-            usuario: user, 
-            destino: dest,
-            timestamp: new Date().getTime()
-        });
+        try {
+            await fetch(`${SERVER_URL}/api/nuevo-pedido`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: userId,
+                    nombre: user,
+                    origen: document.getElementById('origin').value,
+                    destino: dest
+                })
+            });
+            console.log("Pedido enviado al dashboard");
+        } catch (error) {
+            console.error("Error al pedir taxi:", error);
+            alert("Error de conexión con la central.");
+        }
     }
 
-    // Escuchar confirmación del Dashboard
-    socket.on('confirmacion-cliente', (data) => {
+    // Reemplazamos los listeners de Socket.io por binds de Pusher
+    channel.bind('confirmacion-cliente', (data) => {
         document.getElementById('driver-info').innerHTML = 
             `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
     });
 
-    // Escuchar link de pago de Mercado Pago
-    socket.on('recibir-pago', (data) => {
+    channel.bind('recibir-pago', (data) => {
         document.getElementById('payment-area').innerHTML = `
             <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
             <p>Paga tu viaje de forma segura:</p>

@@ -14,13 +14,22 @@
         .btn-assign { background: #2ecc71; }
         .btn-pay { background: #009ee3; }
         .status-badge { display: inline-block; padding: 5px 10px; background: #fff3cd; color: #856404; border-radius: 20px; font-size: 0.8em; margin-bottom: 10px; }
+        .order-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+        .order-item:hover { background: #f0f7ff; }
+        .order-item.active { border-left: 4px solid #009ee3; background: #f0f7ff; }
+        #orders-list { margin-top: 15px; max-height: 400px; overflow-y: auto; }
+        .empty-msg { color: #999; font-style: italic; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>TAXI ADMIN</h2>
-    <p>Operador activo</p>
+    <hr style="border-color: #333">
+    <h4>Pedidos Entrantes</h4>
+    <div id="orders-list">
+        <p class="empty-msg">No hay pedidos nuevos...</p>
+    </div>
 </div>
 
 <div class="content">
@@ -42,19 +51,63 @@
     </div>
 </div>
 
-<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
-    const socket = io('http://localhost:3000');
+    // Configuración de servidor (Local vs Producción)
+    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://dev-eta-seven.vercel.app/'; // Cambiar por tu URL real
+
+    let userId = "123"; // ID por defecto
+
+    // Configurar Pusher para el Operador
+    const pusher = new Pusher('TU_KEY_REAL_AQUI', {
+        cluster: 'TU_CLUSTER_REAL_AQUI',
+        authEndpoint: `${SERVER_URL}/pusher/auth`
+    });
+
+    const adminChannel = pusher.subscribe('private-admin');
+
+    // Escuchar nuevos pedidos
+    adminChannel.bind('nuevo-pedido', (data) => {
+        const list = document.getElementById('orders-list');
+        const emptyMsg = list.querySelector('.empty-msg');
+        if(emptyMsg) emptyMsg.remove();
+
+        const orderDiv = document.createElement('div');
+        orderDiv.className = 'order-item';
+        orderDiv.onclick = () => selectOrder(data.userId, data.id, data.nombre);
+        orderDiv.innerHTML = `
+            <strong>#${data.id} - ${data.nombre}</strong><br>
+            <small>${data.destino.substring(0, 25)}...</small>
+        `;
+        list.prepend(orderDiv);
+    });
+
+    function selectOrder(id, ticket, name) {
+        userId = id;
+        document.querySelector('.status-badge').innerText = `Pedido Pendiente #${ticket} - ${name}`;
+        document.querySelectorAll('.order-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
 
     // 1. Asignar Chofer
-    function asignar() {
+    async function asignar() {
         const chofer = document.getElementById('driverName').value;
         const tiempo = document.getElementById('eta').value;
 
         if(!chofer || !tiempo) return alert("Faltan datos de asignación");
 
-        socket.emit('asignar-taxi', { chofer, tiempo });
-        alert("Chofer asignado y enviado al cliente.");
+        try {
+            await fetch(`${SERVER_URL}/api/asignar-taxi`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, chofer, tiempo })
+            });
+            alert("Chofer asignado y notificación enviada vía Pusher.");
+        } catch (e) {
+            alert("Error al asignar chofer.");
+        }
     }
 
     // 2. Generar Link de Mercado Pago vía Servidor
@@ -63,7 +116,7 @@
         if(!monto) return alert("Ingresa un monto válido");
 
         try {
-            const res = await fetch('http://localhost:3000/create-preference', {
+            const res = await fetch(`${SERVER_URL}/create-preference`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: "Servicio de Taxi", price: monto })
@@ -71,10 +124,11 @@
             const data = await res.json();
 
             if(data.init_point) {
-                // Enviar el link al cliente por Sockets
-                socket.emit('enviar-link-pago', {
-                    link: data.init_point,
-                    monto: monto
+                // Enviar el link al cliente invocando el endpoint de la API
+                await fetch(`${SERVER_URL}/api/enviar-link-pago`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, link: data.init_point, monto: monto })
                 });
                 alert("Link de Mercado Pago generado y enviado.");
             }

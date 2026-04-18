@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 const Pusher = require("pusher");
@@ -10,6 +11,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // Requerido para procesar la autenticación de Pusher
 app.use(cors());
+
+// 1.1 Servir archivos estáticos (HTML, CSS, JS)
+// Esto permite que http://localhost:3000/views/widget.html funcione
+app.use('/views', express.static(path.join(__dirname, '../views')));
+app.use('/core', express.static(path.join(__dirname, '../core')));
 
 // 2. Configuración Mercado Pago (Usando variables de entorno)
 const client = new MercadoPagoConfig({ 
@@ -45,12 +51,12 @@ app.get('/api/bootstrap', (req, res) => {
         'mendoza': {
             name: 'Taxi Mendoza',
             theme: { primary: '#fbbf24', secondary: '#0f172a', radius: '1.5rem' },
-            maps_key: process.env.MAPS_MENDOZA
+            maps_key: process.env.GOOGLE_MAPS_API_KEY
         },
         'taxichat-nine': {
             name: 'TaxiGo Demo',
             theme: { primary: '#10b981', secondary: '#064e3b', radius: '0.5rem' },
-            maps_key: process.env.MAPS_DEMO
+            maps_key: process.env.GOOGLE_MAPS_API_KEY
         }
     };
 
@@ -88,6 +94,16 @@ app.post('/create-preference', async (req, res) => {
 });
 
 // 6. Endpoints de Eventos en Tiempo Real (Pusher)
+app.post('/api/nuevo-pedido', async (req, res) => {
+    const pedido = {
+        ...req.body,
+        id: Date.now().toString().slice(-4),
+        timestamp: new Date().toLocaleTimeString()
+    };
+    await pusher.trigger("private-admin", "nuevo-pedido", pedido);
+    res.json({ status: "Pedido recibido", pedido });
+});
+
 app.post('/api/asignar-taxi', async (req, res) => {
     const { userId, ...data } = req.body;
     // Emitimos a un canal privado único para ese usuario
