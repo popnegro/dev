@@ -57,12 +57,20 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
 
+        /* Contenedor Lottie */
+        #lottie-search {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="widget">
     <h2 class="brand-name">Cargando...</h2>
+    <div id="form-container">
     <input type="text" id="userName" placeholder="Tu Nombre Completo">
     <input type="text" id="origin" placeholder="📍 ¿Desde dónde sales?">
     <input type="text" id="destination" placeholder="🏁 ¿A dónde vamos?">
@@ -72,9 +80,11 @@
     <button id="btnRequest" onclick="solicitarTaxi()">
         <span id="btnText">SOLICITAR TAXI</span>
     </button>
+    </div>
 
     <div id="status-panel" class="status-panel">
         <strong>Estado de tu viaje:</strong>
+        <div id="lottie-search"></div>
         <p id="driver-info">Buscando el chofer más cercano...</p>
         <div id="payment-area"></div>
         <button class="btn-danger" onclick="cancelarPedido()">CANCELAR PEDIDO</button>
@@ -82,6 +92,7 @@
 </div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 <script src="/core/core.js"></script>
 <script>
     // Configuración de servidor (Local vs Producción)
@@ -92,6 +103,8 @@
     let pusher;
     let channel;
     let map;
+    let currentBrand;
+    let searchAnimation;
     const userId = localStorage.getItem('taxiChatUserId') || `u${Math.random().toString(36).substring(2, 9)}`;
     localStorage.setItem('taxiChatUserId', userId);
     // Función Debounce para limitar la frecuencia de llamadas
@@ -103,10 +116,29 @@
         };
     }
 
+    // Inicializar Animación Lottie
+    function initLottie() {
+        searchAnimation = lottie.loadAnimation({
+            container: document.getElementById('lottie-search'),
+            renderer: 'svg',
+            loop: true,
+            autoplay: false,
+            path: 'https://lottie.host/8254c0e6-993d-495f-9e87-010e47087e5b/8Y7p7Y9i8A.json' // Animación de Taxi/Mapa
+        });
+    }
+
     // Esperar a que TaxiChat Core cargue la configuración dinámica
     document.addEventListener('taxichat-ready', (e) => {
         const config = e.detail;
+        currentBrand = config.brandID;
         console.log("📦 Configuración recibida en Widget:", config);
+
+        initLottie();
+
+        // UX: Recuperar estado de viaje activo si existe
+        if (localStorage.getItem('taxiChatActiveOrder')) {
+            mostrarEstadoActivo(JSON.parse(localStorage.getItem('taxiChatActiveOrder')));
+        }
 
         pusher = new Pusher(config.pusher_key, {
             cluster: config.pusher_cluster,
@@ -136,8 +168,13 @@
 
         // Vincular eventos de Pusher
         channel.bind('confirmacion-cliente', (data) => {
+            toggleSearchAnimation(false);
             document.getElementById('driver-info').innerHTML = 
                 `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
+            
+            // Persistir info del chofer por si recarga
+            const activeOrder = JSON.parse(localStorage.getItem('taxiChatActiveOrder') || '{}');
+            localStorage.setItem('taxiChatActiveOrder', JSON.stringify({...activeOrder, ...data}));
         });
 
         channel.bind('recibir-pago', (data) => {
@@ -148,6 +185,30 @@
             `;
         });
     });
+
+    function toggleSearchAnimation(show) {
+        const container = document.getElementById('lottie-search');
+        if (show) {
+            container.style.display = 'block';
+            searchAnimation.play();
+        } else {
+            container.style.display = 'none';
+            searchAnimation.stop();
+        }
+    }
+
+    function mostrarEstadoActivo(orderData) {
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('status-panel').style.display = 'block';
+        
+        if (orderData.chofer) {
+            toggleSearchAnimation(false);
+            document.getElementById('driver-info').innerHTML = 
+                `✅ <b>${orderData.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${orderData.tiempo} min</b>.`;
+        } else {
+            toggleSearchAnimation(true);
+        }
+    }
 
     let originAutocomplete, destAutocomplete;
     let selectedOrigin = null;
@@ -196,16 +257,21 @@
         });
 
         // Autodetectar ubicación para el campo origen
+        // UX: Mejorado para mostrar dirección real, no coordenadas
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(p => {
+            navigator.geolocation.getCurrentPosition(async (p) => {
                 // Solo autodetectar si el usuario no ha empezado a escribir manualmente
                 if (!originInput.value) {
                     const coords = { lat: p.coords.latitude, lng: p.coords.longitude };
-                    selectedOrigin = {
-                        name: "Ubicación actual",
-                        geometry: { location: coords }
-                    };
-                    originInput.value = `Ubicación actual (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+                    const result = await TaxiChat.reverseGeocode(coords.lat, coords.lng);
+                    
+                    if (result) {
+                        selectedOrigin = {
+                            formatted_address: result.formatted_address,
+                            geometry: { location: coords }
+                        };
+                        originInput.value = result.formatted_address;
+                    }
                     calcularEstimacionDebounced();
                 }
             });
@@ -300,16 +366,23 @@
             return alert("Por favor, completa nombre, origen y destino válidos.");
         }
 
-        document.getElementById('status-panel').style.display = 'block';
+        mostrarEstadoActivo({});
         document.getElementById('btnRequest').disabled = true;
-        document.getElementById('btnRequest').innerHTML = `<div class="spinner"></div> BUSCANDO CHOFER...`;
         
+        const orderInfo = {
+            userId: userId,
+            brand: currentBrand,
+            nombre: user
+        };
+        localStorage.setItem('taxiChatActiveOrder', JSON.stringify(orderInfo));
+
         try {
             await fetch(`${SERVER_URL}/api/nuevo-pedido`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: userId,
+                    brand: currentBrand,
                     nombre: user,
                     origen: document.getElementById('origin').value,
                     destino: dest
@@ -323,19 +396,25 @@
     }
 
     async function cancelarPedido() {
+        // UX: Confirmación obligatoria para evitar errores
+        if (!confirm("¿Seguro que deseas cancelar tu pedido?")) return;
+
         try {
             await fetch(`${SERVER_URL}/api/cancelar-pedido`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: userId })
             });
+            localStorage.removeItem('taxiChatActiveOrder');
             console.log("Cancelación enviada al servidor");
         } catch (error) {
             console.error("Error al notificar cancelación:", error);
         }
 
+        toggleSearchAnimation(false);
         // 1. Ocultar el panel de estado y resetear el botón de solicitud
         document.getElementById('status-panel').style.display = 'none';
+        document.getElementById('form-container').style.display = 'block';
         const btnRequest = document.getElementById('btnRequest');
         btnRequest.disabled = false;
         btnRequest.innerHTML = `<span id="btnText">SOLICITAR TAXI</span>`;

@@ -7,8 +7,11 @@ const TaxiChat = {
 
     async init() {
         const hostname = window.location.hostname;
-        // Detectar ID de marca desde el subdominio
-        const brandID = hostname.includes('localhost') ? 'taxichat' : hostname.split('.')[0];
+        // Detectar subdominio o forzar 'taxichat' en localhost puro
+        let brandID = hostname.split('.')[0];
+        if (brandID === 'localhost' || brandID === '127.0.0.1') {
+            brandID = 'taxichat';
+        }
         
         console.log(`🔍 Intentando cargar marca: ${brandID} desde ${hostname}`);
 
@@ -21,7 +24,7 @@ const TaxiChat = {
             this.applyUI();
             this.loadGoogleMaps();
             
-            console.log(`🚀 Empresa cargada: ${this.config.name}. Disparando taxichat-ready...`);
+            console.log(`🚀 Empresa cargada: ${this.config.name} (${brandID}).`);
             // Notificar a otros scripts que la configuración está lista
             document.dispatchEvent(new CustomEvent('taxichat-ready', { detail: this.config }));
 
@@ -29,7 +32,19 @@ const TaxiChat = {
         } catch (error) {
             console.error("❌ Error Core:", error);
             this.applyDefaultTheme();
+            // Notificar que hubo un fallo en la carga inicial
+            document.dispatchEvent(new CustomEvent('taxichat-error', { detail: error.message }));
         }
+    },
+
+    getPersistentUserId() {
+        let userId = localStorage.getItem('taxichat_user_id');
+        if (!userId) {
+            // Generamos un ID único combinando timestamp y strings aleatorios
+            userId = 'u' + Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('taxichat_user_id', userId);
+        }
+        return userId;
     },
 
     applyTheme() {
@@ -75,6 +90,56 @@ const TaxiChat = {
         this.map = new google.maps.Map(mapContainer, {
             center: { lat: -32.8895, lng: -68.8458 }, // Mendoza por defecto
             zoom: 14
+        });
+    },
+
+    /**
+     * Convierte coordenadas en una dirección legible (Reverse Geocoding)
+     */
+    async reverseGeocode(lat, lng) {
+        if (!window.google || !window.google.maps) return null;
+        const geocoder = new google.maps.Geocoder();
+        
+        return new Promise((resolve) => {
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    resolve({
+                        formatted_address: results[0].formatted_address,
+                        place_id: results[0].place_id
+                    });
+                } else {
+                    console.warn("Geocodificación fallida:", status);
+                    resolve(null);
+                }
+            });
+        });
+    },
+
+    /**
+     * Configura el autocompletado de Google Places para capturar la dirección formateada.
+     * @param {string} inputId - El ID del elemento <input> donde el usuario escribe.
+     * @param {Function} callback - Función que recibe el objeto con la dirección y coordenadas.
+     */
+    setupAddressAutocomplete(inputId, callback) {
+        const input = document.getElementById(inputId);
+        if (!input || !window.google || !window.google.maps.places) return;
+
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+            fields: ["formatted_address", "geometry"],
+            types: ["geocode", "establishment"] // Permite direcciones y nombres de lugares conocidos
+        });
+
+        autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry || !place.formatted_address) return;
+
+            if (callback) {
+                callback({
+                    formatted_address: place.formatted_address,
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng()
+                });
+            }
         });
     },
 

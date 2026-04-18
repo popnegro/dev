@@ -1,10 +1,12 @@
 const path = require('path');
-// Resolve the absolute path to the .env file in the parent directory
+// Configuramos dotenv para buscar el archivo .env un nivel arriba de la carpeta actual (/api)
 const envPath = path.resolve(__dirname, '../.env');
 const envResult = require('dotenv').config({ path: envPath });
 
 if (envResult.error) {
-    console.warn(`⚠️ Warning: Could not find .env file at ${envPath}`);
+    console.warn(`⚠️ ADVERTENCIA: No se pudo cargar el archivo .env en ${envPath}. Asegúrate de que exista en la raíz del proyecto.`);
+} else {
+    console.log(`⚙️ Archivo .env cargado correctamente desde: ${envPath}`);
 }
 
 // --- BLOQUE DE VALIDACIÓN DE ENTORNO ---
@@ -25,8 +27,6 @@ if (missingVars.length > 0) {
     console.error('\nVerifica que el archivo .env esté en la raíz de /api/ y tenga los valores correctos.');
     process.exit(1); 
 }
-
-console.log(`✅ Environment variables loaded successfully from: ${envPath}`);
 // ---------------------------------------
 
 const express = require('express');
@@ -99,15 +99,23 @@ app.get('/api/bootstrap', (req, res) => {
     
     // Mapeo dinámico usando variables de entorno
     const tenants = {
+        'localhost': {
+            name: 'TaxiChat Dev',
+            theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
+            maps_key: process.env.GOOGLE_MAPS_API_KEY,
+            password: 'admin'
+        },
         'taxichat': {
             name: 'TaxiChat Central',
             theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
-            maps_key: process.env.GOOGLE_MAPS_API_KEY
+            maps_key: process.env.GOOGLE_MAPS_API_KEY,
+            password: '123'
         },
         'mendoza': {
             name: 'Taxi Mendoza',
             theme: { primary: '#fbbf24', secondary: '#0f172a', radius: '1.5rem' },
-            maps_key: process.env.GOOGLE_MAPS_API_KEY
+            maps_key: process.env.GOOGLE_MAPS_API_KEY,
+            password: 'taxi'
         },
         'taxichat-nine': {
             name: 'TaxiChat Demo',
@@ -117,11 +125,28 @@ app.get('/api/bootstrap', (req, res) => {
     };
 
     const config = tenants[brand] || tenants['mendoza'];
+    
+    // Si la marca no existe, usamos 'mendoza' como fallback pero informamos el ID real
+    const resolvedBrandID = tenants[brand] ? brand : 'mendoza';
+
     res.json({
         ...config,
+        brandID: resolvedBrandID,
         pusher_key: process.env.PUSHER_KEY,
         pusher_cluster: process.env.PUSHER_CLUSTER
     });
+});
+
+// Nuevo Endpoint de Login para el Dashboard Único
+app.post('/api/login', (req, res) => {
+    const { brand, password } = req.body;
+    const tenants = { 'localhost': 'admin', 'taxichat': '123', 'mendoza': 'taxi' };
+    
+    if (tenants[brand] && tenants[brand] === password) {
+        res.json({ success: true, brand });
+    } else {
+        res.status(401).json({ success: false, message: "Credenciales inválidas" });
+    }
 });
 
 // 5. Endpoint para Mercado Pago
@@ -129,7 +154,7 @@ app.post('/create-preference', async (req, res) => {
     try {
         const preference = new Preference(client);
         // Detectar dinámicamente el origen para que las Back URLs funcionen en localhost
-        const baseUrl = req.headers.origin || process.env.FRONTEND_URL || "https://taxichat-nine.vercel.app";
+        const baseUrl = req.headers.origin || process.env.FRONTEND_URL || "https://dev-eta-seven.vercel.app/";
         
         const result = await preference.create({
             body: {
@@ -167,15 +192,20 @@ app.post('/api/nuevo-pedido', async (req, res) => {
         id: Date.now().toString().slice(-4),
         timestamp: new Date().toLocaleTimeString()
     };
-    writeLog('PEDIDO_NUEVO', pedido);
-    await pusher.trigger("private-admin", "nuevo-pedido", pedido);
+    
+    const brand = req.body.brand || 'mendoza';
+    const brandChannel = `private-admin-${brand}`;
+    
+    writeLog('PEDIDO_NUEVO', { ...pedido, targetChannel: brandChannel });
+    await pusher.trigger(brandChannel, "nuevo-pedido", pedido);
     res.json({ status: "Pedido recibido", pedido });
 });
 
 app.post('/api/cancelar-pedido', async (req, res) => {
-    const { userId } = req.body;
+    const { userId, brand } = req.body;
+    const brandChannel = `private-admin-${brand || 'mendoza'}`;
     writeLog('PEDIDO_CANCELADO', { userId });
-    await pusher.trigger("private-admin", "pedido-cancelado", { userId });
+    await pusher.trigger(brandChannel, "pedido-cancelado", { userId });
     res.json({ status: "Cancelación notificada", userId });
 });
 
@@ -214,14 +244,16 @@ if (process.env.NODE_ENV !== 'production') {
         console.log(`✅ Servidor local corriendo en el puerto ${PORT}`);
     });
 
+    // Manejo de errores específicos del servidor (como puerto ocupado)
     server.on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
-            console.error(`❌ Port ${PORT} is already in use. Try changing the PORT in your .env or killing the existing process.`);
-            process.exit(1);
+            console.error(`❌ ERROR: El puerto ${PORT} ya está en uso. Prueba cerrando otros servidores o cambia el PORT en el .env`);
         } else {
-            console.error('❌ Server error:', err);
+            console.error('❌ Error al iniciar el servidor:', err);
         }
     });
+} else {
+    console.log('🌐 Entorno de producción detectado (Vercel Mode). No se inició el listener local.');
 }
 
 module.exports = app;
