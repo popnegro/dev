@@ -1,9 +1,13 @@
 {
   "version": 2,
   "rewrites": [
+<<<<<<< HEAD
     {
       "source": "/(api/.*|create-preference|pusher/auth|status|$)",
       "destination": "/api/index.js"
     }
+=======
+    { "source": "/(.*)", "destination": "/api/index.js" }
+>>>>>>> parent of 5ef7d24 (Vercel)
   ]
 }
