@@ -1,4 +1,25 @@
 require('dotenv').config();
+
+// --- BLOQUE DE VALIDACIÓN DE ENTORNO ---
+const requiredEnvVars = [
+    'MP_ACCESS_TOKEN',
+    'PUSHER_APP_ID',
+    'PUSHER_KEY',
+    'PUSHER_SECRET',
+    'PUSHER_CLUSTER',
+    'GOOGLE_MAPS_API_KEY'
+];
+
+const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingVars.length > 0) {
+    console.error('❌ ERROR CRÍTICO: Faltan variables en el archivo .env:');
+    missingVars.forEach(v => console.error(`   - ${v}`));
+    console.error('\nVerifica que el archivo .env esté en la raíz de /api/ y tenga los valores correctos.');
+    process.exit(1); 
+}
+// ---------------------------------------
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -180,8 +201,10 @@ app.get('/status', (req, res) => {
 // 7. Encender servidor
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`✅ Servidor local corriendo en el puerto ${PORT}`);
+    });
+}
 
 module.exports = app;
