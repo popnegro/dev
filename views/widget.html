@@ -5,20 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Taxi Widget - Cliente</title>
     <style>
-        :root { --primary: #000; --accent: #009ee3; }
+        :root { 
+            --primary: var(--color-primary, #000); 
+            --accent: var(--color-secondary, #009ee3); 
+            --radius: var(--brand-radius, 15px);
+        }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .widget { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; font-size: 1.5em; border-bottom: 2px solid #eee; padding-bottom: 10px; color: var(--primary); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .widget { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; font-size: 1.4em; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; color: var(--primary); font-weight: 700; }
+        
+        .step { display: none; opacity: 0; }
+        .step.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .step-exit { display: block !important; animation: fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        input { width: 100%; padding: 14px; margin: 12px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; transition: all 0.3s ease; }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px rgba(0, 158, 227, 0.1); }
+        
         button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        button:hover { opacity: 0.8; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:active { transform: scale(0.98); }
         button:disabled { background: #ccc; cursor: not-allowed; }
+        
         .btn-danger { background: #dc3545; margin-top: 15px; }
         
-        .status-panel { margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 5px solid var(--accent); display: none; border-radius: 8px; animation: fadeIn 0.5s; }
+        .status-panel { margin-top: 20px; padding: 18px; background: #f8fbff; border: 1px solid #e1efff; border-left: 5px solid var(--accent); display: none; border-radius: 12px; animation: fadeIn 0.5s; }
         #payment-area a { display: block; background: var(--accent); color: white; text-align: center; padding: 12px; text-decoration: none; border-radius: 8px; margin-top: 15px; font-weight: bold; }
-        .price-tag { color: #2ecc71; font-weight: bold; font-size: 1.2em; }
-        #map-canvas { width: 100%; height: 180px; margin-top: 15px; border-radius: 8px; display: none; border: 1px solid #ddd; }
+
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); margin-top: 5px; }
+        .summary-trip { font-size: 0.9em; color: #555; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .summary-trip b { color: var(--primary); }
+        
+        #estimate-box { 
+            margin: 15px 0; 
+            padding: 20px; 
+            background: #f8fbff; 
+            border-radius: var(--radius); 
+            border: 2px dashed var(--accent); 
+            display: none; 
+            text-align: center;
+            color: var(--primary);
+        }
+        .price-tag { color: var(--accent); font-weight: 900; font-size: 2.4em; display: block; margin: 5px 0; line-height: 1; }
+        .eta-badge { display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-bottom: 10px; }
+        
 
         /* Spinner UX */
         .spinner {
@@ -34,23 +63,37 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
 
     </style>
 </head>
 <body>
 
 <div class="widget">
-    <h2>Pedir un Taxi</h2>
-    <input type="text" id="userName" placeholder="Tu Nombre Completo">
-    <input type="text" id="origin" placeholder="¿Desde dónde sales?">
-    <input type="text" id="destination" placeholder="¿A dónde vamos?">
-    
-    <div id="estimate-box" style="margin: 10px 0; font-size: 0.9em; color: #666;"></div>
-    <div id="map-canvas"></div>
-    
-    <button id="btnRequest" onclick="solicitarTaxi()">
-        <span id="btnText">SOLICITAR TAXI</span>
-    </button>
+    <div id="step-1" class="step active">
+        <h2>Paso 1: ¿A dónde vamos?</h2>
+        <input type="text" id="userName" placeholder="Tu Nombre Completo">
+        <input type="text" id="origin" placeholder="📍 ¿Desde dónde sales?">
+        <input type="text" id="destination" placeholder="🏁 ¿A dónde vamos?">
+        
+        <button onclick="validarPaso1()">VER PRECIO Y TIEMPO</button>
+    </div>
+
+    <div id="step-2" class="step">
+        <h2>Paso 2: Confirmar Viaje</h2>
+        
+        <div class="summary-trip" id="trip-summary">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <div id="estimate-box"></div>
+        
+        <button id="btnRequest" onclick="solicitarTaxi()" disabled>
+            <span id="btnText">CONFIRMAR Y PEDIR TAXI</span>
+        </button>
+
+        <button id="btnBack" class="btn-outline" onclick="cambiarPaso(1)">VOLVER A EDITAR</button>
+    </div>
 
     <div id="status-panel" class="status-panel">
         <strong>Estado de tu viaje:</strong>
@@ -70,8 +113,17 @@
 
     let pusher;
     let channel;
-    let map, directionsService, directionsRenderer;
-    const userId = "123"; 
+    let map;
+    const userId = localStorage.getItem('taxiChatUserId') || `u${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('taxiChatUserId', userId);
+    // Función Debounce para limitar la frecuencia de llamadas
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
     // Esperar a que TaxiChat Core cargue la configuración dinámica
     document.addEventListener('taxichat-ready', (e) => {
@@ -84,6 +136,25 @@
         });
 
         channel = pusher.subscribe(`private-user-${userId}`);
+
+        // Monitoreo de estado de conexión para feedback del usuario
+        pusher.connection.bind('state_change', (states) => {
+            console.log(`📡 Pusher: ${states.previous} -> ${states.current}`);
+            const driverInfo = document.getElementById('driver-info');
+            const statusPanel = document.getElementById('status-panel');
+
+            // Si el panel de estado está visible (hay un pedido activo) informamos al usuario
+            if (statusPanel.style.display === 'block') {
+                if (states.current === 'unavailable' || states.current === 'failed') {
+                    driverInfo.innerHTML = `<span style="color: #dc3545;">⚠️ Problemas de conexión. Reconectando...</span>`;
+                } else if (states.current === 'connected') {
+                    // Al recuperar conexión, si no hay chofer asignado aún, restauramos el texto
+                    if (!driverInfo.innerHTML.includes('✅')) {
+                        driverInfo.innerText = "Buscando el chofer más cercano...";
+                    }
+                }
+            }
+        });
 
         // Vincular eventos de Pusher
         channel.bind('confirmacion-cliente', (data) => {
@@ -98,6 +169,14 @@
                 <a href="${data.link}" target="_blank">PAGAR $${data.monto}</a>
             `;
         });
+    });
+
+    // Forzar reconexión al recuperar el foco de la pestaña (vital para dispositivos móviles)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && pusher && pusher.connection.state !== 'connected') {
+            console.log("🔄 Pestaña activa: Verificando conexión en tiempo real...");
+            pusher.connect();
+        }
     });
 
     let originAutocomplete, destAutocomplete;
@@ -115,31 +194,60 @@
         }
     });
 
+    let isTransitioning = false;
+    function cambiarPaso(paso) {
+        if (isTransitioning) return;
+        const currentStep = document.querySelector('.step.active');
+        const nextStep = document.getElementById(`step-${paso}`);
+
+        if (currentStep && currentStep !== nextStep) {
+            isTransitioning = true;
+            currentStep.classList.add('step-exit');
+            currentStep.addEventListener('animationend', () => {
+                currentStep.classList.remove('active', 'step-exit');
+                nextStep.classList.add('active');
+                isTransitioning = false;
+            }, { once: true });
+        } else if (!currentStep) {
+            nextStep.classList.add('active');
+        }
+    }
+
+    function validarPaso1() {
+        const user = document.getElementById('userName').value;
+        if (!user) return alert("Por favor, ingresa tu nombre");
+        if (!selectedOrigin || !selectedOrigin.geometry || !selectedDest || !selectedDest.geometry) return alert("Selecciona origen y destino válidos");
+        cambiarPaso(2);
+    }
+
     function initMaps() {
         const destInput = document.getElementById('destination');
         const originInput = document.getElementById('origin');
         if (!destInput || !originInput) return;
 
-        // Inicializar Mapa y Servicios de Ruta
-        map = new google.maps.Map(document.getElementById('map-canvas'), {
-            center: { lat: -32.8895, lng: -68.8458 },
-            zoom: 14,
-            disableDefaultUI: true
-        });
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+        // Definir los límites geográficos aproximados de Mendoza
+        const mendozaBounds = {
+            north: -32.70,
+            south: -33.10,
+            east: -68.60,
+            west: -69.10,
+        };
 
         originAutocomplete = new google.maps.places.Autocomplete(originInput);
-        destAutocomplete = new google.maps.places.Autocomplete(destInput);
+        destAutocomplete = new google.maps.places.Autocomplete(destInput, {
+            bounds: mendozaBounds,
+            strictBounds: true, // Obliga a buscar solo dentro de los límites
+            componentRestrictions: { country: 'ar' }
+        });
 
         originAutocomplete.addListener('place_changed', () => {
             selectedOrigin = originAutocomplete.getPlace();
-            calcularEstimacion();
+            calcularEstimacionDebounced();
         });
 
         destAutocomplete.addListener('place_changed', () => {
             selectedDest = destAutocomplete.getPlace();
-            calcularEstimacion();
+            calcularEstimacionDebounced();
         });
 
         // Autodetectar ubicación para el campo origen
@@ -153,21 +261,33 @@
                         geometry: { location: coords }
                     };
                     originInput.value = `Ubicación actual (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
-                    calcularEstimacion();
+                    calcularEstimacionDebounced();
                 }
             });
         }
 
         // Resetear validación si el usuario escribe manualmente
-        originInput.addEventListener('input', () => { selectedOrigin = null; calcularEstimacion(); });
-        destInput.addEventListener('input', () => { selectedDest = null; calcularEstimacion(); });
+        originInput.addEventListener('input', () => { selectedOrigin = null; calcularEstimacionDebounced(); });
+        destInput.addEventListener('input', () => { selectedDest = null; calcularEstimacionDebounced(); });
     }
 
     function calcularEstimacion() {
         const estimateBox = document.getElementById('estimate-box');
+        const btnRequest = document.getElementById('btnRequest');
+
         if (!selectedOrigin || !selectedDest || !selectedOrigin.geometry || !selectedDest.geometry) {
+            estimateBox.style.display = 'none';
             estimateBox.innerHTML = "";
+            if (btnRequest) {
+                btnRequest.disabled = true;
+                btnRequest.innerHTML = `<span id="btnText">CONFIRMAR Y PEDIR TAXI</span>`;
+            }
             return;
+        }
+
+        if (btnRequest) {
+            btnRequest.disabled = true;
+            btnRequest.innerHTML = `<div class="spinner"></div> CARGANDO PRECIO...`;
         }
 
         const service = new google.maps.DistanceMatrixService();
@@ -177,6 +297,8 @@
             destinations: [selectedDest.geometry.location],
             travelMode: google.maps.TravelMode.DRIVING,
         }, (response, status) => {
+            if (btnRequest) btnRequest.innerHTML = `<span id="btnText">CONFIRMAR Y PEDIR TAXI</span>`;
+
             if (status === 'OK' && response.rows[0].elements[0].status === 'OK') {
                 const element = response.rows[0].elements[0];
                 const distanceText = element.distance.text;
@@ -186,28 +308,46 @@
                 // Algoritmo de precio: $400 base + $150 por KM
                 const price = (distanceValue * 150 + 400).toFixed(0);
                 
-                estimateBox.innerHTML = 
-                    `Distancia: ${distanceText} (${durationText}) | <span class="price-tag">Est: $${price}</span>`;
-                trazarRuta();
+                // Generar Link dinámico para Google Maps
+                const getLatLng = (place) => {
+                    if (!place || !place.geometry) return null;
+                    const loc = place.geometry.location;
+                    return typeof loc.lat === 'function' ? `${loc.lat()},${loc.lng()}` : `${loc.lat},${loc.lng}`;
+                };
+
+                const originParam = getLatLng(selectedOrigin) || encodeURIComponent(document.getElementById('origin').value);
+                const destParam = getLatLng(selectedDest) || encodeURIComponent(document.getElementById('destination').value);
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originParam}&destination=${destParam}&travelmode=driving`;
+
+                document.getElementById('trip-summary').innerHTML = `
+                    <div>De: <b>${document.getElementById('origin').value}</b></div>
+                    <div>A: <b>${document.getElementById('destination').value}</b></div>
+                `;
+
+                estimateBox.style.display = 'block';
+                estimateBox.innerHTML = `
+                    <span class="eta-badge">⏱ LLEGA EN ${durationText.toUpperCase()}</span>
+                    <small style="display:block; color: #666; text-transform: uppercase; letter-spacing: 1px; font-size: 0.7em; font-weight: bold;">Precio Final Estimado</small>
+                    <span class="price-tag">$${price}</span>
+                    
+                    <div style="font-size: 0.8em; margin-top: 10px; opacity: 0.6;">Recorrido total: ${distanceText}</div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dotted var(--accent); text-align: center;">
+                        <a href="${googleMapsUrl}" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: bold; font-size: 0.85em;">
+                            🗺️ Ver recorrido completo ↗
+                        </a>
+                    </div>
+                `;
+
+                if (btnRequest) btnRequest.disabled = false;
             } else {
                 estimateBox.innerHTML = "No se pudo calcular la distancia.";
+                if (btnRequest) btnRequest.disabled = true;
             }
         });
     }
 
-    function trazarRuta() {
-        if (!selectedOrigin || !selectedDest || !selectedOrigin.geometry || !selectedDest.geometry) return;
-        
-        document.getElementById('map-canvas').style.display = 'block';
-
-        directionsService.route({
-            origin: selectedOrigin.geometry.location,
-            destination: selectedDest.geometry.location,
-            travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-            if (status === 'OK') directionsRenderer.setDirections(result);
-        });
-    }
+    // Creamos la versión con debounce (500ms de espera)
+    const calcularEstimacionDebounced = debounce(calcularEstimacion, 500);
 
     async function solicitarTaxi() {
         const user = document.getElementById('userName').value;
@@ -226,6 +366,7 @@
         document.getElementById('status-panel').style.display = 'block';
         document.getElementById('btnRequest').disabled = true;
         document.getElementById('btnRequest').innerHTML = `<div class="spinner"></div> BUSCANDO CHOFER...`;
+        if(document.getElementById('btnBack')) document.getElementById('btnBack').style.display = 'none';
         
         try {
             await fetch(`${SERVER_URL}/api/nuevo-pedido`, {
@@ -258,10 +399,12 @@
         }
 
         // 1. Ocultar el panel de estado y resetear el botón de solicitud
+        cambiarPaso(1);
         document.getElementById('status-panel').style.display = 'none';
         const btnRequest = document.getElementById('btnRequest');
-        btnRequest.disabled = false;
-        btnRequest.innerHTML = `<span id="btnText">SOLICITAR TAXI</span>`;
+        btnRequest.disabled = true;
+        btnRequest.innerHTML = `<span id="btnText">CONFIRMAR Y PEDIR TAXI</span>`;
+        if(document.getElementById('btnBack')) document.getElementById('btnBack').style.display = 'block';
 
         // 2. Limpiar los campos de entrada de ubicación
         document.getElementById('origin').value = '';
@@ -272,11 +415,6 @@
         selectedOrigin = null;
         selectedDest = null;
 
-        // 4. Limpiar el mapa y las rutas trazadas
-        if (directionsRenderer) {
-            directionsRenderer.setDirections({ routes: [] });
-        }
-        document.getElementById('map-canvas').style.display = 'none';
 
         // 5. Resetear información de conductor y pagos
         document.getElementById('driver-info').innerText = "Buscando el chofer más cercano...";
