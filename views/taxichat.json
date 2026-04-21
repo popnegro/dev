@@ -1,0 +1,10 @@
+{
+    "name": "TaxiChat Central",
+    "theme": {
+        "primary": "#000000",
+        "secondary": "#276EF1",
+        "radius": "8px"
+    },
+    "password": "123",
+    "active": true
+}

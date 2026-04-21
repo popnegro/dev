@@ -9,36 +9,59 @@
             --primary: var(--color-primary, #000); 
             --accent: var(--color-secondary, #009ee3); 
             --radius: var(--brand-radius, 15px);
+            --bg-body: #FFFFFF;
+            --bg-widget: #FFFFFF;
+            --text-main: #000000;
+            --border-color: #E2E2E2;
+            --input-bg: #F3F3F3;
+            --button-bg: #000000;
+            --button-text: #FFFFFF;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .widget { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; font-size: 1.5em; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; color: var(--primary); font-weight: 700; }
 
-        input { width: 100%; padding: 14px; margin: 12px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-size: 15px; transition: all 0.3s ease; }
-        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px rgba(0, 158, 227, 0.1); }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #000000;
+                --bg-widget: #121212;
+                --text-main: #FFFFFF;
+                --border-color: #333333;
+                --input-bg: #1A1A1A;
+                --button-bg: #FFFFFF;
+                --button-text: #000000;
+            }
+        }
+
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; justify-content: center; padding: 20px; transition: background 0.3s, color 0.3s; }
+        .widget { background: var(--bg-widget); width: 100%; max-width: 400px; padding: 25px; border-radius: var(--radius); box-shadow: none; border: 1px solid var(--border-color); }
+        h2 { margin-top: 0; font-size: 1.25em; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; color: var(--text-main); font-weight: 500; letter-spacing: -0.5px; }
+
+        input { width: 100%; padding: 12px 16px; margin: 8px 0; border: 1px solid var(--input-bg); background: var(--input-bg); color: var(--text-main); border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: all 0.2s ease; }
+        input:focus { border-color: var(--text-main); background: var(--bg-widget); outline: none; }
         
-        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button { width: 100%; padding: 14px; background: var(--button-bg); color: var(--button-text); border: none; border-radius: 8px; cursor: pointer; font-weight: 500; margin-top: 10px; transition: 0.2s; font-size: 16px; }
+        button:hover { opacity: 0.85; }
         button:active { transform: scale(0.98); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:disabled { background: #E2E2E2; color: #999999; cursor: not-allowed; }
+        @media (prefers-color-scheme: dark) {
+            button:disabled { background: #333333; color: #666666; }
+        }
         
-        .btn-danger { background: #dc3545; margin-top: 15px; }
+        .btn-danger { background: #FF3B30; margin-top: 15px; }
         
-        .status-panel { margin-top: 20px; padding: 18px; background: #f8fbff; border: 1px solid #e1efff; border-left: 5px solid var(--accent); display: none; border-radius: 12px; animation: fadeIn 0.5s; }
-        #payment-area a { display: block; background: var(--accent); color: white; text-align: center; padding: 12px; text-decoration: none; border-radius: 8px; margin-top: 15px; font-weight: bold; }
+        .status-panel { margin-top: 20px; padding: 20px; background: var(--bg-widget); border: 1px solid var(--border-color); border-top: 4px solid var(--button-bg); color: var(--text-main); display: none; border-radius: 8px; animation: fadeIn 0.4s; }
+        #payment-area a { display: block; background: #276EF1; color: white; text-align: center; padding: 14px; text-decoration: none; border-radius: 8px; margin-top: 15px; font-weight: 500; }
 
         #estimate-box { 
             margin: 15px 0; 
             padding: 20px; 
-            background: #f8fbff; 
+            background: var(--bg-widget); 
             border-radius: var(--radius); 
-            border: 2px dashed var(--accent); 
+            border: 1px solid var(--border-color); 
             display: none; 
-            text-align: center;
-            color: var(--primary);
+            text-align: left;
+            color: var(--text-main);
         }
-        .price-tag { color: var(--accent); font-weight: 900; font-size: 2.4em; display: block; margin: 5px 0; line-height: 1; }
-        .eta-badge { display: inline-block; background: var(--primary); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; margin-bottom: 10px; }
+        .price-tag { color: var(--text-main); font-weight: 600; font-size: 1.8em; display: block; margin: 5px 0; }
+        .eta-badge { display: inline-block; color: #276EF1; font-size: 0.9em; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; }
         
 
         /* Spinner UX */
@@ -104,6 +127,7 @@
     let channel;
     let map;
     let currentBrand;
+    let etaInterval;
     let searchAnimation;
     const userId = localStorage.getItem('taxiChatUserId') || `u${Math.random().toString(36).substring(2, 9)}`;
     localStorage.setItem('taxiChatUserId', userId);
@@ -118,12 +142,19 @@
 
     // Inicializar Animación Lottie
     function initLottie() {
+        const container = document.getElementById('lottie-search');
         searchAnimation = lottie.loadAnimation({
-            container: document.getElementById('lottie-search'),
+            container: container,
             renderer: 'svg',
             loop: true,
             autoplay: false,
-            path: 'https://lottie.host/8254c0e6-993d-495f-9e87-010e47087e5b/8Y7p7Y9i8A.json' // Animación de Taxi/Mapa
+            path: 'https://assets5.lottiefiles.com/packages/lf20_t9gkkhz4.json' // Animación pública estable de búsqueda
+        });
+
+        // Fallback: Si la animación falla, ocultamos el contenedor para no romper la UI
+        searchAnimation.addEventListener('data_failed', () => {
+            container.style.display = 'none';
+            console.warn("⚠️ No se pudo cargar la animación Lottie, continuando sin feedback visual.");
         });
     }
 
@@ -169,12 +200,16 @@
         // Vincular eventos de Pusher
         channel.bind('confirmacion-cliente', (data) => {
             toggleSearchAnimation(false);
-            document.getElementById('driver-info').innerHTML = 
-                `✅ <b>${data.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${data.tiempo} min</b>.`;
             
-            // Persistir info del chofer por si recarga
+            const etaTimestamp = Date.now();
+            
+            // Persistir info del chofer y el timestamp de inicio por si recarga
             const activeOrder = JSON.parse(localStorage.getItem('taxiChatActiveOrder') || '{}');
-            localStorage.setItem('taxiChatActiveOrder', JSON.stringify({...activeOrder, ...data}));
+            const orderData = { ...activeOrder, ...data, etaTimestamp };
+            localStorage.setItem('taxiChatActiveOrder', JSON.stringify(orderData));
+
+            // Iniciar el contador dinámico
+            startETACountdown(parseInt(data.tiempo), etaTimestamp);
         });
 
         channel.bind('recibir-pago', (data) => {
@@ -197,14 +232,46 @@
         }
     }
 
+    function startETACountdown(initialMinutes, startTime) {
+        if (etaInterval) clearInterval(etaInterval);
+
+        const updateUI = () => {
+            const now = Date.now();
+            // Calculamos cuántos minutos han pasado desde el timestamp inicial
+            const elapsedMinutes = Math.floor((now - startTime) / 60000);
+            const remaining = initialMinutes - elapsedMinutes;
+
+            const driverInfo = document.getElementById('driver-info');
+            const activeOrder = JSON.parse(localStorage.getItem('taxiChatActiveOrder') || '{}');
+
+            if (!activeOrder.chofer) return; // Seguridad: Si no hay chofer asignado, no actualizar
+
+            if (remaining > 0) {
+                driverInfo.innerHTML = 
+                    `✅ <b>${activeOrder.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${remaining} min</b>.`;
+            } else {
+                driverInfo.innerHTML = 
+                    `✅ <b>${activeOrder.chofer}</b> está llegando.<br>¡Estate atento!`;
+                clearInterval(etaInterval);
+            }
+        };
+
+        updateUI(); // Ejecución inmediata
+        etaInterval = setInterval(updateUI, 60000); // Actualizar cada minuto
+    }
+
     function mostrarEstadoActivo(orderData) {
         document.getElementById('form-container').style.display = 'none';
         document.getElementById('status-panel').style.display = 'block';
         
         if (orderData.chofer) {
             toggleSearchAnimation(false);
-            document.getElementById('driver-info').innerHTML = 
-                `✅ <b>${orderData.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${orderData.tiempo} min</b>.`;
+            if (orderData.etaTimestamp) {
+                startETACountdown(parseInt(orderData.tiempo), orderData.etaTimestamp);
+            } else {
+                document.getElementById('driver-info').innerHTML = 
+                    `✅ <b>${orderData.chofer}</b> está en camino.<br>Llega en aproximadamente <b>${orderData.tiempo} min</b>.`;
+            }
         } else {
             toggleSearchAnimation(true);
         }
@@ -391,6 +458,13 @@
             console.log("Pedido enviado al dashboard");
         } catch (error) {
             console.error("Error al pedir taxi:", error);
+            
+            // UX: Revertir UI en caso de fallo para permitir reintento
+            localStorage.removeItem('taxiChatActiveOrder');
+            document.getElementById('status-panel').style.display = 'none';
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('btnRequest').disabled = false;
+            
             alert("Error de conexión con la central.");
         }
     }
@@ -411,6 +485,7 @@
             console.error("Error al notificar cancelación:", error);
         }
 
+        if (etaInterval) clearInterval(etaInterval);
         toggleSearchAnimation(false);
         // 1. Ocultar el panel de estado y resetear el botón de solicitud
         document.getElementById('status-panel').style.display = 'none';

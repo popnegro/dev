@@ -37,6 +37,30 @@ const TaxiChat = {
         }
     },
 
+    async loadDestinationContent(slug) {
+        try {
+            const response = await fetch(`/api/destination-content?slug=${slug}`);
+            if (!response.ok) return;
+            const content = await response.json();
+
+            // Inyección dinámica de SEO
+            document.title = content.title;
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.setAttribute('content', content.description);
+
+            // Inyección de textos en la UI
+            const h1 = document.querySelector('h1.dynamic-h1');
+            if (h1) h1.innerText = content.h1;
+            
+            const seoText = document.querySelector('.dynamic-seo-text');
+            if (seoText) seoText.innerText = content.seo_text;
+
+            console.log("📈 Contenido SEO inyectado para:", slug);
+        } catch (error) {
+            console.warn("⚠️ No se pudo cargar contenido SEO específico.");
+        }
+    },
+
     getPersistentUserId() {
         let userId = localStorage.getItem('taxichat_user_id');
         if (!userId) {
@@ -145,9 +169,9 @@ const TaxiChat = {
 
     applyDefaultTheme() {
         const root = document.documentElement;
-        root.style.setProperty('--color-primary', '#fbbf24');
-        root.style.setProperty('--color-secondary', '#0f172a');
-        root.style.setProperty('--brand-radius', '0.75rem');
+        root.style.setProperty('--color-primary', '#0f172a'); // Slate 900
+        root.style.setProperty('--color-secondary', '#2563eb'); // Blue 600
+        root.style.setProperty('--brand-radius', '8px');
     }
 };
 

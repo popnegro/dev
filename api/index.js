@@ -96,45 +96,45 @@ app.post('/pusher/auth', (req, res) => {
 // 4. Endpoint para Configuración de Marca (Bootstrap)
 app.get('/api/bootstrap', (req, res) => {
     const { brand } = req.query;
-    
-    // Mapeo dinámico usando variables de entorno
-    const tenants = {
-        'localhost': {
-            name: 'TaxiChat Dev',
-            theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
+    // Intentamos buscar en la carpeta tenants o usamos views como fallback según tu estructura
+    const tenantsDir = path.join(__dirname, '../views'); 
+    let resolvedBrandID = brand || 'mendoza';
+    let tenantFilePath = path.join(tenantsDir, `${resolvedBrandID}.json`);
+
+    if (!fs.existsSync(tenantFilePath)) {
+        resolvedBrandID = 'mendoza';
+        tenantFilePath = path.join(tenantsDir, 'mendoza.json');
+    }
+
+    try {
+        const tenantData = JSON.parse(fs.readFileSync(tenantFilePath, 'utf8'));
+        res.json({
+            ...tenantData,
+            brandID: resolvedBrandID,
             maps_key: process.env.GOOGLE_MAPS_API_KEY,
-            password: 'admin'
-        },
-        'taxichat': {
-            name: 'TaxiChat Central',
-            theme: { primary: '#000000', secondary: '#009ee3', radius: '1rem' },
-            maps_key: process.env.GOOGLE_MAPS_API_KEY,
-            password: '123'
-        },
-        'mendoza': {
-            name: 'Taxi Mendoza',
-            theme: { primary: '#fbbf24', secondary: '#0f172a', radius: '1.5rem' },
-            maps_key: process.env.GOOGLE_MAPS_API_KEY,
-            password: 'taxi'
-        },
-        'taxichat-nine': {
-            name: 'TaxiChat Demo',
-            theme: { primary: '#10b981', secondary: '#064e3b', radius: '0.5rem' },
-            maps_key: process.env.GOOGLE_MAPS_API_KEY
+            pusher_key: process.env.PUSHER_KEY,
+            pusher_cluster: process.env.PUSHER_CLUSTER
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Error cargando configuración de partner" });
+    }
+});
+// Nuevo Endpoint para obtener contenido SEO dinámico
+app.get('/api/destination-content', (req, res) => {
+    const { slug } = req.query; // Ej: mendoza-taxis
+    const contentDir = path.join(__dirname, 'destinations');
+    const filePath = path.join(contentDir, `${slug}.json`);
+
+    if (fs.existsSync(filePath)) {
+        try {
+            const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            res.json(content);
+        } catch (error) {
+            res.status(500).json({ error: "Error al leer contenido de destino" });
         }
-    };
-
-    const config = tenants[brand] || tenants['mendoza'];
-    
-    // Si la marca no existe, usamos 'mendoza' como fallback pero informamos el ID real
-    const resolvedBrandID = tenants[brand] ? brand : 'mendoza';
-
-    res.json({
-        ...config,
-        brandID: resolvedBrandID,
-        pusher_key: process.env.PUSHER_KEY,
-        pusher_cluster: process.env.PUSHER_CLUSTER
-    });
+    } else {
+        res.status(404).json({ error: "Destino no encontrado" });
+    }
 });
 
 // Nuevo Endpoint de Login para el Dashboard Único
