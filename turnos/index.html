@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instituto Oftalmológico Guerrero</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans text-gray-800">
+
+<!-- HERO -->
+<section class="bg-gray-900 text-white text-center py-16 px-6">
+  <h1 class="text-3xl md:text-5xl font-bold mb-4">Recuperá tu visión con especialistas</h1>
+  <p class="mb-6">Centro de alta complejidad en cirugía ocular avanzada</p>
+  <div class="flex flex-col md:flex-row justify-center gap-4">
+    <a href="#turno" class="bg-white text-black px-6 py-3 rounded-xl font-semibold">Solicitar turno</a>
+    <a href="#turno" class="border border-white px-6 py-3 rounded-xl">Evaluar mi caso</a>
+  </div>
+</section>
+
+<!-- PROBLEMAS -->
+<section class="py-12 px-6 text-center">
+  <h2 class="text-2xl font-bold mb-6">¿Te pasa algo de esto?</h2>
+  <div class="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+    <p>👁️ Veo borroso o tengo miopía</p>
+    <p>💧 Tengo ojo seco o molestias</p>
+    <p>⚠️ Me dijeron que necesito cirugía</p>
+    <p>👓 Quiero dejar de usar lentes</p>
+  </div>
+</section>
+
+<!-- SOLUCION -->
+<section class="bg-gray-100 py-12 px-6 text-center">
+  <h2 class="text-2xl font-bold mb-4">Un solo lugar para resolver tu problema visual</h2>
+  <p>Diagnóstico preciso, tratamientos personalizados y tecnología avanzada</p>
+</section>
+
+<!-- TRATAMIENTOS -->
+<section class="py-12 px-6">
+  <h2 class="text-2xl font-bold text-center mb-8">Tratamientos</h2>
+  <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    <div class="border p-4 rounded-xl">Cirugía láser</div>
+    <div class="border p-4 rounded-xl">Ojo seco</div>
+    <div class="border p-4 rounded-xl">Córnea</div>
+    <div class="border p-4 rounded-xl">Glaucoma</div>
+    <div class="border p-4 rounded-xl">Lentes intraoculares</div>
+  </div>
+</section>
+
+<!-- AUTORIDAD -->
+<section class="bg-gray-900 text-white py-12 px-6 text-center">
+  <div class="grid md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+    <div><h3 class="text-xl font-bold">+30 años</h3><p>Experiencia</p></div>
+    <div><h3 class="text-xl font-bold">Especialistas</h3><p>En córnea</p></div>
+    <div><h3 class="text-xl font-bold">Alta complejidad</h3><p>Cirugías</p></div>
+    <div><h3 class="text-xl font-bold">Tecnología</h3><p>Avanzada</p></div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section class="py-12 px-6 text-center">
+  <h2 class="text-2xl font-bold mb-6">¿Cómo funciona?</h2>
+  <div class="grid md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+    <p>1. Completás formulario</p>
+    <p>2. Evaluamos tu caso</p>
+    <p>3. Te contactamos</p>
+    <p>4. Confirmás turno</p>
+  </div>
+</section>
+
+<!-- FORM -->
+<section id="turno" class="bg-gray-100 py-12 px-6">
+  <div class="max-w-md mx-auto">
+    <h2 class="text-2xl font-bold text-center mb-6">Solicitar turno</h2>
+    <form onsubmit="sendWhatsApp(event)">
+      <input id="nombre" required placeholder="Nombre" class="w-full p-3 mb-3 border rounded" />
+      <input id="telefono" required placeholder="Teléfono" class="w-full p-3 mb-3 border rounded" />
+      <select id="tipo" class="w-full p-3 mb-3 border rounded">
+        <option>Consulta general</option>
+        <option>Cirugía láser</option>
+      </select>
+      <button class="w-full bg-black text-white py-3 rounded-xl">Enviar</button>
+    </form>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="py-16 text-center">
+  <h2 class="text-2xl font-bold mb-4">Tu visión puede mejorar desde hoy</h2>
+  <a href="#turno" class="bg-black text-white px-6 py-3 rounded-xl">Solicitar turno</a>
+</section>
+
+<script>
+function sendWhatsApp(e) {
+  e.preventDefault()
+  const nombre = document.getElementById('nombre').value
+  const telefono = document.getElementById('telefono').value
+  const tipo = document.getElementById('tipo').value
+
+  const text = `Hola, soy ${nombre}. Quiero un turno para ${tipo}`
+  window.location.href = `https://wa.me/549XXXXXXXXX?text=${encodeURIComponent(text)}`
+}
+</script>
+
+</body>
+</html>
